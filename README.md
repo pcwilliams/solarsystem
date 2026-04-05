@@ -2,7 +2,7 @@
 
 A real-time solar system simulation for iPhone, powered by real orbital mechanics, NASA texture maps, and 8,920 real stars from the Hipparcos catalogue.
 
-![SolarSystem - Saturn with rings, moons, and real star names](https://pcwilliams.design/dev/solarsystem/solarsystem.png)
+![SolarSystem - Saturn with rings, moons, and real star names](solarsystem.png)
 
 ## Features
 
