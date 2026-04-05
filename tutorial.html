@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarSystem - Build Tutorial</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --surface: #12121f;
+            --border: #1e1e3a;
+            --text: #e0e0f0;
+            --accent: #ffaa33;
+            --prompt-bg: #0d1a2a;
+            --response-bg: #1a0d2a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #ff6600, #ffaa33, #ffdd66, #ffaa33, #ff6600);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .step { margin-bottom: 2.5rem; }
+
+        .step-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6600, #ffaa33);
+            color: white; width: 32px; height: 32px; border-radius: 50%;
+            text-align: center; line-height: 32px;
+            font-weight: bold; font-size: 0.9rem; margin-right: 0.5rem;
+        }
+
+        .step-title { display: inline; font-size: 1.2rem; color: var(--accent); }
+
+        .prompt {
+            background: var(--prompt-bg);
+            border-left: 3px solid #0066ff;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem; margin: 1rem 0; font-style: italic;
+        }
+        .prompt::before { content: "Prompt: "; font-weight: bold; font-style: normal; color: #4488ff; }
+
+        .response {
+            background: var(--response-bg);
+            border-left: 3px solid #8844ff;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem; margin: 1rem 0;
+        }
+        .response::before { content: "Approach: "; font-weight: bold; color: #aa66ff; }
+
+        .outcome {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem 1.25rem; margin: 1rem 0;
+        }
+        .outcome::before { content: "Outcome: "; font-weight: bold; color: #00cc88; }
+
+        .tech-note {
+            background: #1a1a0d;
+            border-left: 3px solid #ccaa00;
+            border-radius: 0 8px 8px 0;
+            padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.9rem;
+        }
+        .tech-note::before { content: "Technical note: "; font-weight: bold; color: #ccaa00; }
+
+        code {
+            background: #1a1a2e; padding: 0.15rem 0.4rem; border-radius: 4px;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88rem; color: #aaddff;
+        }
+    </style>
+</head>
+<body>
+    <h1>SolarSystem</h1>
+    <p class="subtitle">Build Tutorial &mdash; A conversation-driven development narrative</p>
+
+    <div style="text-align: center; margin: 32px 0 40px;">
+        <div style="display: inline-block; background: #000; border-radius: 40px; padding: 14px; box-shadow: 0 16px 64px rgba(0,0,0,0.6);">
+            <img src="solarsystem.png" style="width: 260px; border-radius: 28px; display: block;" />
+        </div>
+        <p style="color: #888; font-size: 0.85rem; margin-top: 16px;">The solar system in your pocket</p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+        <span class="step-number">1</span>
+        <h2 class="step-title">The Vision</h2>
+
+        <div class="prompt">How about building a solar system simulation for iPhone? I'd love it to use real planetary physics to calculate where all the planets actually are right now, with a beautiful GPU-accelerated 3D render that you can pinch and drag around. The planets should look like the real thing &mdash; could we make that work?</div>
+
+        <div class="response">SceneKit + Keplerian orbital mechanics was identified as the ideal combination. The physics is well-understood (JPL publishes orbital elements for all planets), the math is lightweight enough for CPU, and SceneKit handles GPU rendering with PBR materials. The key challenge was scale &mdash; the real solar system is mostly empty space.</div>
+
+        <div class="outcome">Complete project scaffolded in one pass: 12 Swift files, Xcode project with pbxproj, CLAUDE.md, README.md, architecture.html, tutorial.html. All orbital elements for 9 planets + 16 moons entered from JPL data. Build succeeded first try (after fixing two minor type issues).</div>
+
+        <div class="tech-note">The decision to use SceneKit over raw Metal saved thousands of lines of rendering boilerplate. SceneKit provides PBR materials, camera control, hit testing, and gesture handling &mdash; all GPU-accelerated and part of the standard iOS SDK.</div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+        <span class="step-number">2</span>
+        <h2 class="step-title">First Light &mdash; Fixing the Scale</h2>
+
+        <div class="prompt">Could we test this thoroughly in the simulator, using command line args to set up starting conditions?</div>
+
+        <div class="response">Systematic simulator testing with 16 different launch configurations revealed the first major bug: planet radii were calculated larger than orbit distances. Earth's scene radius was 17 units but its orbit was only 16.5 units away &mdash; planets were bigger than the solar system!</div>
+
+        <div class="outcome">Switched to cube-root scaling for planet radii, producing Jupiter &asymp; 0.25, Earth &asymp; 0.11, Mercury &asymp; 0.08 scene units. All 10 bodies verified rendering correctly with procedural textures, PBR lighting, and Saturn's rings.</div>
+
+        <div class="tech-note">The formula <code>sceneRadius = (km/1000)^(1/3) &times; 0.06</code> compresses the 30x real range (Mercury to Jupiter) into a visually useful 3x range while preserving ordering. Later refined to sqrt scaling for better ratios.</div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+        <span class="step-number">3</span>
+        <h2 class="step-title">Making the Sun Shine</h2>
+
+        <div class="prompt">The Sun looks very flat in texture. Could we improve it?</div>
+
+        <div class="response">Added procedural surface texture with granulation (800 convection cells), supergranulation (40 larger cells), and limb darkening. Multi-layer corona with 4 glow spheres using radial gradient textures and additive blending. Initially added sunspots, but removed them for accuracy &mdash; real sunspot positions require live NOAA data. Sun rotation tied to real sidereal period (25.05 days).</div>
+
+        <div class="outcome">Sun now shows realistic surface detail up close, with a smooth multi-layer corona that fades naturally. Rotation is physically accurate &mdash; visible only at high time scales, matching the real 25.05-day period.</div>
+
+        <div class="tech-note">Each glow layer uses <code>blendMode = .add</code> with <code>writesToDepthBuffer = false</code> to avoid z-fighting. The radial gradient texture is generated via <code>CGGradient.drawRadialGradient()</code> and applied as both diffuse and transparent contents.</div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+        <span class="step-number">4</span>
+        <h2 class="step-title">NASA Textures</h2>
+
+        <div class="prompt">For Earth, Jupiter, Saturn, the Moon, and Mars &mdash; are there publicly available images we could texture map onto the surfaces to make them look as realistic as possible?</div>
+
+        <div class="response">Downloaded real imagery from NASA, USGS, and other sources: Earth (Blue Marble, 5400&times;2700), Moon (LRO, 1024&times;512), Mars (Viking MDIM21, 4096&times;2048), Jupiter (NASA Cassini PIA07782), and Saturn (Cassini composite). Added as bundled JPGs with equirectangular projection for sphere mapping.</div>
+
+        <div class="outcome">Dramatic visual improvement. Real continents on Earth, actual cloud bands on Jupiter, Valles Marineris on Mars, real craters on the Moon. A huge step from procedural textures to real planetary imagery.</div>
+
+        <div class="tech-note">NASA imagery is public domain (US government work). All textures are equirectangular projection, which SceneKit maps onto <code>SCNSphere</code> automatically via the default UV mapping. Later, Jupiter and Pluto were upgraded to direct NASA public-domain sources for cleaner licensing.</div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+        <span class="step-number">5</span>
+        <h2 class="step-title">Getting the Sizes Right</h2>
+
+        <div class="prompt">Would it make sense to make moons and planets correct relative size to each other? The Moon seems enormous next to Earth.</div>
+
+        <div class="response">Refined the scaling system in three ways: (1) switched from cube-root to sqrt for planet radii, preserving more of the real size hierarchy; (2) moons now use real radius ratio to their parent with a minimum floor; (3) moon distances use compressed real orbital ratios instead of hardcoded values. The formula <code>pow(realRatio, 0.4) &times; 1.5</code> preserves relative ordering while keeping moons visible near their parent.</div>
+
+        <div class="outcome">Jupiter is now visibly 3.3&times; Earth. The Moon is 0.27&times; Earth (real ratio). Galilean moons are properly tiny around Jupiter. Moon distances scale proportionally &mdash; close moons stay close, distant ones (Iapetus) extend further out.</div>
+
+        <div class="tech-note">The camera framing calculation uses the outermost moon position as the system extent, then positions the camera at <code>extent &times; 3.7</code> to fill roughly half the screen (derived from FOV 60&deg;, half-screen subtending 15&deg;, <code>1/tan(15&deg;) &asymp; 3.7</code>).</div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+        <span class="step-number">6</span>
+        <h2 class="step-title">Labels That Actually Work</h2>
+
+        <div class="prompt">Labels still vary in size &mdash; a constant small but readable size would be great. Also, a constant distance on-screen would be best.</div>
+
+        <div class="response">Refactored from 3D <code>SCNText</code> nodes to SwiftUI overlay labels. Each body's 3D position is projected to screen coordinates via <code>SCNView.projectPoint()</code>, then rendered as a SwiftUI <code>Text</code> view at a constant pixel size. Planets get 12pt medium weight, moons get 10pt slightly dimmer. Labels behind the camera or off-screen are culled.</div>
+
+        <div class="outcome">Pixel-perfect labels at every zoom level. Tapping a label flies to that body. Labels are future-proof for adding info popups, animations, or interactive features.</div>
+
+        <div class="tech-note">The <code>projectPoint()</code> method returns a <code>SCNVector3</code> where z &gt; 1.0 indicates the point is behind the camera. The overlay uses <code>GeometryReader</code> with <code>.position()</code> modifier for absolute positioning, and <code>.allowsHitTesting(true)</code> with <code>.onTapGesture</code> for interaction.</div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+        <span class="step-number">7</span>
+        <h2 class="step-title">Taking Control of the Camera</h2>
+
+        <div class="prompt">Planet shortcuts worked a few times, then stopped! Also, single finger drag for translation and another gesture for rotation feels more natural.</div>
+
+        <div class="response">The root cause was SceneKit's built-in <code>allowsCameraControl</code> maintaining internal state that overrides programmatic camera changes. Replaced it entirely with a custom <code>Coordinator</code> that manages explicit camera state (target, distance, azimuth, elevation) with spherical-to-cartesian conversion. Swapped gestures: one-finger pan translates, two-finger pan orbits, pinch zooms.</div>
+
+        <div class="outcome">Planet shortcuts now work reliably every time. Navigation feels natural &mdash; one finger slides the view like a map, two fingers rotate around the current focus. Double-tap returns to the full solar system overview. A house icon in the toolbar provides an always-visible home button.</div>
+
+        <div class="tech-note">The coordinator stores <code>cameraTarget</code>, <code>cameraDistance</code>, <code>orbitAngleX</code> (azimuth), and <code>orbitAngleY</code> (elevation). The <code>updateCamera()</code> method converts to cartesian: <code>x = target.x + dist &times; cos(elev) &times; sin(azim)</code>. Planet shortcuts call <code>setCamera(target:distance:)</code> directly, bypassing any gesture state. The <code>pendingFocus</code> mechanism handles launch-arg focus by deferring until the coordinator's <code>didSet</code> fires.</div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="step">
+        <span class="step-number">8</span>
+        <h2 class="step-title">Saturn's Rings Done Right</h2>
+
+        <div class="prompt">The Saturn ring texture doesn't seem to have been mapped radially &mdash; the bands look straight rather than circular.</div>
+
+        <div class="response"><code>SCNTube</code> cap UVs map linearly across the disc, not radially. Built custom ring geometry from scratch: a flat disc with 72 radial segments &times; 4 ring segments, with explicit UV coordinates where <code>u</code> maps from inner radius (0) to outer radius (1) radially, and <code>v</code> maps around the circumference. Applied Cassini colour map and transparency pattern.</div>
+
+        <div class="outcome">Ring bands now curve concentrically around Saturn as they should, with realistic colour variation and transparency gaps from the Cassini imagery. The Cassini Division gap is visible in the alpha map.</div>
+
+        <div class="tech-note">The custom geometry uses <code>SCNGeometrySource</code> for vertices, normals, and texture coordinates, with <code>SCNGeometryElement</code> for triangle indices. The key insight: UV <code>u</code> coordinate runs radially (0 at inner edge, 1 at outer edge) so the 915&times;64 strip texture wraps correctly from inner to outer ring.</div>
+
+        <!-- Ring UV mapping diagram -->
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 460 220" width="440" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="460" height="220" fill="#0d0d1a" rx="8"/>
+
+            <!-- LEFT: SCNTube (wrong) -->
+            <text x="110" y="20" fill="#ff6666" font-size="11" font-weight="600" text-anchor="middle">SCNTube (linear UVs)</text>
+
+            <!-- Ring with straight lines -->
+            <ellipse cx="110" cy="110" rx="85" ry="50" fill="none" stroke="#664422" stroke-width="12" opacity="0.6"/>
+            <!-- Straight texture lines (wrong) -->
+            <line x1="30" y1="85" x2="190" y2="85" stroke="#aa8855" stroke-width="1" opacity="0.7"/>
+            <line x1="28" y1="100" x2="192" y2="100" stroke="#886633" stroke-width="1.5" opacity="0.7"/>
+            <line x1="28" y1="115" x2="192" y2="115" stroke="#aa8855" stroke-width="1" opacity="0.7"/>
+            <line x1="30" y1="130" x2="190" y2="130" stroke="#886633" stroke-width="1.5" opacity="0.7"/>
+
+            <!-- Planet -->
+            <circle cx="110" cy="110" r="22" fill="#ccaa66"/>
+
+            <!-- X mark -->
+            <line x1="155" y1="165" x2="170" y2="180" stroke="#ff4444" stroke-width="2.5"/>
+            <line x1="170" y1="165" x2="155" y2="180" stroke="#ff4444" stroke-width="2.5"/>
+            <text x="110" y="200" fill="#ff6666" font-size="10" text-anchor="middle">Bands are straight lines</text>
+
+            <!-- Arrow -->
+            <text x="230" y="115" fill="#888" font-size="20">&rarr;</text>
+
+            <!-- RIGHT: Custom disc (correct) -->
+            <text x="350" y="20" fill="#44cc88" font-size="11" font-weight="600" text-anchor="middle">Custom Disc (radial UVs)</text>
+
+            <!-- Ring with concentric arcs -->
+            <ellipse cx="350" cy="110" rx="85" ry="50" fill="none" stroke="#664422" stroke-width="12" opacity="0.6"/>
+            <!-- Concentric ring bands (correct) -->
+            <ellipse cx="350" cy="110" rx="60" ry="35" fill="none" stroke="#aa8855" stroke-width="1" opacity="0.8"/>
+            <ellipse cx="350" cy="110" rx="68" ry="40" fill="none" stroke="#886633" stroke-width="1.5" opacity="0.8"/>
+            <ellipse cx="350" cy="110" rx="76" ry="45" fill="none" stroke="#aa8855" stroke-width="1" opacity="0.8"/>
+            <ellipse cx="350" cy="110" rx="83" ry="49" fill="none" stroke="#886633" stroke-width="1.5" opacity="0.8"/>
+
+            <!-- Planet -->
+            <circle cx="350" cy="110" r="22" fill="#ccaa66"/>
+
+            <!-- Check mark -->
+            <polyline points="342,170 350,180 365,162" fill="none" stroke="#44cc88" stroke-width="2.5"/>
+            <text x="350" y="200" fill="#44cc88" font-size="10" text-anchor="middle">Bands curve concentrically</text>
+
+            <!-- UV labels -->
+            <text x="350" y="215" fill="#556677" font-size="9" text-anchor="middle">u: inner&rarr;outer | v: around circumference</text>
+        </svg>
+        </div>
+    </div>
+
+    <!-- Step 9 -->
+    <div class="step">
+        <span class="step-number">9</span>
+        <h2 class="step-title">Textures for Every World</h2>
+
+        <div class="prompt">Could we texture map all the remaining planets and major moons from NASA data? Also, could the textures rotate realistically?</div>
+
+        <div class="response">Downloaded equirectangular texture maps for all 9 planets and 5 major moons from NASA (Earth, Moon, Mars, Jupiter, Pluto, Europa), Solar System Scope CC-BY 4.0 (Mercury, Venus, Uranus, Neptune), Planet Pixel Emporium (Saturn), and Voyager/Galileo composites (Io, Ganymede, Callisto). Added IAU rotation data for every body &mdash; sidereal rotation period, axial obliquity, and prime meridian at J2000.0. Tidally locked moons (including Earth's) match their orbital period so the same face always points toward their parent. Venus rotates backwards at 177&deg;, Uranus rolls on its side at 98&deg;.</div>
+
+        <div class="outcome">Every body in the simulation now has a real photographic texture rotating at its correct rate. Speed up time to 10,000x to see Jupiter's cloud bands spin (one rotation every 3.6 seconds), or watch the Moon keep its familiar face toward Earth. Saturn's rings stay fixed in the equatorial plane while the cloud bands rotate beneath.</div>
+
+        <div class="tech-note">The ring counter-rotation was a subtle bug &mdash; since rings are child nodes of Saturn, they inherited the parent's spin. Fixed by setting <code>ringNode.eulerAngles.y = -spin</code> each frame to cancel the parent's rotation while preserving the axial tilt.</div>
+    </div>
+
+    <!-- Step 10 -->
+    <div class="step">
+        <span class="step-number">10</span>
+        <h2 class="step-title">8,920 Real Stars</h2>
+
+        <div class="prompt">Is the star field accurate, or just random points?</div>
+
+        <div class="response">Downloaded the HYG v38 star catalogue (Hipparcos/Yale/Gliese amalgamation), filtered to 8,920 naked-eye stars. Each star mapped to the celestial sphere from its RA/Dec coordinates, sized by magnitude across 4 brightness tiers, and coloured by B-V index (blue-white O/B stars through yellow G stars to red M stars). The ~120 brightest named stars are labelled.</div>
+
+        <div class="outcome">Recognisable constellations visible in the background. The Milky Way's galactic plane shows as a clear density concentration. Zoom in on any planet and see the real stars behind it. Sirius, Betelgeuse, Polaris, Vega &mdash; all in their correct positions with correct colours and relative brightnesses.</div>
+
+        <div class="tech-note">Star labels are occluded behind planet discs by projecting each body's position to screen space and computing an approximate screen radius. Stars whose projected position falls within a planet's disc are culled. Labels use the same deconfliction system as moons, with independent show/hide toggles for planets, moons, and stars.</div>
+    </div>
+
+    <!-- Step 11 -->
+    <div class="step">
+        <span class="step-number">11</span>
+        <h2 class="step-title">Polish and Persistence</h2>
+
+        <div class="prompt">Could we have separate toggles for planet, moon, and star labels? And persist all the settings? Also a zoom slider, and an app icon?</div>
+
+        <div class="response">Split the single label toggle into three independent controls (planets, moons, stars) in a popup menu. All settings persisted to UserDefaults. Added a horizontal zoom slider with logarithmic mapping above the toolbar &mdash; labels hide during drag for performance. Generated a programmatic dark-mode app icon with stylised planets, orbits, and starfield. Cleaned up ~250 lines of dead code (old 3D labels, procedural planet textures replaced by NASA imagery, unused methods) and added descriptive comments throughout all 12 source files.</div>
+
+        <div class="outcome">A polished, feature-complete orrery. Settings persist across launches. The zoom slider provides precise control from planet close-ups to the full solar system. The app icon captures the essence of the simulation in a single glance. Code is clean and well-documented for future development.</div>
+
+        <div class="tech-note">Performance was critical for the zoom slider. The original SwiftUI <code>Slider</code> caused frame drops by publishing changes every pixel. Replaced with a custom <code>DragGesture</code> control, and label projection is throttled to every 3rd frame. Labels are hidden entirely during zoom drags via an <code>isZooming</code> flag. Licence research led to replacing Jupiter and Pluto textures with direct NASA public-domain sources, keeping only Saturn's Planet Pixel Emporium textures (the best available for ring detail).</div>
+    </div>
+
+    <!-- Step 12 -->
+    <div class="step">
+        <span class="step-number">12</span>
+        <h2 class="step-title">The Wobble Bug</h2>
+
+        <div class="prompt">Do Saturn's rings really change attitude quite often? At 10,000x they're oscillating every few seconds.</div>
+
+        <div class="response">The rings were wobbling because of a subtle Euler angle composition bug. SceneKit applies <code>eulerAngles</code> in Y-X-Z order, so <code>(tilt, spin, 0)</code> means: yaw by spin, THEN pitch by tilt. This causes the tilt axis itself to rotate with each spin cycle &mdash; the rings appeared to oscillate at the planet's rotation frequency. At 10,000x, Saturn spins once every 3.8 seconds, making the wobble obvious.</div>
+
+        <div class="outcome">Switched from Euler angles to quaternion composition: <code>tiltQuat * spinQuat</code>. The tilt quaternion is applied in world space (fixed), and spin happens around the tilted pole axis (local). Saturn's rings now hold perfectly steady while the cloud bands rotate underneath. All planets benefit &mdash; Earth's 23.4&deg; tilt, Uranus's 97.8&deg; sideways roll, all rock-solid at any time scale.</div>
+
+        <div class="tech-note">Quaternion multiplication order matters: <code>tiltQuat * spinQuat</code> applies spin first (in the body's pre-tilt frame), then tilt (in world space). The ring's counter-rotation also uses quaternions: <code>simd_quatf(angle: -spin, axis: (0,1,0))</code> in the local frame cancels the parent's spin while inheriting the stable tilt. This is a classic 3D rotation pitfall &mdash; Euler angles are intuitive to write but compose incorrectly when axes depend on each other.</div>
+    </div>
+
+</body>
+</html>

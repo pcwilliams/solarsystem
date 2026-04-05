@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarSystem - Architecture</title>
+    <style>
+        :root {
+            --bg: #0a0a14;
+            --surface: #12121f;
+            --border: #1e1e3a;
+            --text: #e0e0f0;
+            --accent: #ffaa33;
+            --accent2: #4488ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+            line-height: 1.7;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #ff6600, #ffaa33, #ffdd66, #ffaa33, #ff6600);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .diagram-section h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .mermaid { display: flex; justify-content: center; }
+
+        .deep-dive {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .deep-dive h2 { color: var(--accent); margin-bottom: 1rem; font-size: 1.2rem; }
+
+        .deep-dive h3 {
+            color: #88bbff;
+            margin: 1.5rem 0 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.3rem;
+        }
+
+        .deep-dive p { margin: 0.5rem 0; }
+
+        .deep-dive .math {
+            background: #0d0d1a;
+            border: 1px solid #1e1e3a;
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin: 0.75rem 0;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88rem;
+            color: #c0c0e0;
+            overflow-x: auto;
+            line-height: 2;
+        }
+
+        .math .var { color: #66ccff; font-weight: 600; }
+        .math .fn { color: #cc88ff; }
+        .math .num { color: #88ddaa; }
+        .math .op { color: #ff8866; }
+        .math .comment { color: #666688; font-style: italic; }
+        .math .heading {
+            color: #88bbff; font-weight: 600; display: block;
+            margin-top: 0.6rem; margin-bottom: 0.2rem;
+            font-size: 0.85rem; letter-spacing: 0.03em; text-transform: uppercase;
+        }
+
+        .pipeline { display: flex; flex-direction: column; gap: 1rem; margin: 1rem 0; }
+        .stage { display: flex; align-items: flex-start; gap: 1rem; }
+        .stage-num {
+            background: linear-gradient(135deg, #ff6600, #ffaa33);
+            color: white; min-width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.8rem; flex-shrink: 0;
+        }
+        .stage-content { flex: 1; }
+        .stage-content strong { color: var(--accent); }
+
+        .info-box {
+            background: linear-gradient(135deg, #0d1a2a, #0d0d1a);
+            border: 1px solid #1a3a5a; border-radius: 8px;
+            padding: 1rem 1.25rem; margin: 0.75rem 0;
+        }
+        .info-box .label { color: var(--accent2); font-weight: 600; font-size: 0.85rem; margin-bottom: 0.3rem; }
+
+        code {
+            background: #1a1a2e; padding: 0.15rem 0.4rem; border-radius: 4px;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88rem; color: #aaddff;
+        }
+
+        ul { margin: 0.5rem 0 0.5rem 1.5rem; }
+        li { margin: 0.3rem 0; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#1a1a3e',
+                primaryTextColor: '#e0e0f0',
+                primaryBorderColor: '#ffaa33',
+                lineColor: '#ffaa33',
+                secondaryColor: '#0d0d1a',
+                tertiaryColor: '#12121f'
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>SolarSystem</h1>
+    <p class="subtitle">Architecture &mdash; Real orbital mechanics meets GPU-accelerated rendering</p>
+
+    <div style="text-align: center; margin: 32px 0 40px;">
+        <div style="display: inline-block; background: #000; border-radius: 40px; padding: 14px; box-shadow: 0 16px 64px rgba(0,0,0,0.6);">
+            <img src="solarsystem.png" style="width: 260px; border-radius: 28px; display: block;" />
+        </div>
+        <p style="color: #888; font-size: 0.85rem; margin-top: 16px;">Saturn with Cassini ring textures, moons, and real star names</p>
+    </div>
+
+    <!-- System Architecture -->
+    <div class="diagram-section">
+        <h2>System Architecture</h2>
+        <div class="mermaid">
+            graph TD
+                A["Current Date/Time"] --> B["Julian Date Converter"]
+                B --> C["Orbital Mechanics Engine<br/>(CPU, Keplerian)"]
+                C --> D["Planet Positions<br/>(Heliocentric Ecliptic)"]
+                D --> E["Log Distance +<br/>Sqrt Radius Scaler"]
+                B --> R["IAU Rotation<br/>(Axial Tilt + Spin)"]
+                E --> F["SceneKit Scene Graph<br/>(GPU, PBR)"]
+                R --> F
+                F --> G["SCNView<br/>(UIViewRepresentable)"]
+                G --> H["SwiftUI Overlay<br/>(Labels, HUD, Zoom)"]
+                H --> I["Custom Camera<br/>Coordinator"]
+                I --> G
+
+                J["JPL J2000.0<br/>Elements"] --> C
+                K["NASA/Cassini<br/>Textures"] --> F
+                L["Time Controls<br/>(Speed/Pause/Reset)"] --> A
+                M["HYG Star<br/>Catalogue (8,920)"] --> F
+                N["UserDefaults"] --> H
+
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style C fill:#1a2a1a,stroke:#44aa44
+                style R fill:#1a2a1a,stroke:#44aa44
+                style F fill:#1a1a3e,stroke:#4488ff
+                style H fill:#2a1a2a,stroke:#aa44ff
+                style I fill:#1a2a2a,stroke:#44aaaa
+                style M fill:#1a1a3e,stroke:#88bbff
+        </div>
+    </div>
+
+    <!-- Custom Camera Controller -->
+    <div class="diagram-section">
+        <h2>Custom Camera Controller</h2>
+        <div class="mermaid">
+            graph TD
+                A["UIGestureRecognizers"] --> B["1-Finger Pan"]
+                A --> C["2-Finger Pan"]
+                A --> D["Pinch"]
+                A --> E["Single Tap"]
+                A --> F["Double Tap"]
+
+                B --> G["Translate Target<br/>(camera-local right + up)"]
+                C --> H["Orbit<br/>(azimuth + elevation)"]
+                D --> I["Zoom<br/>(scale distance)"]
+                E --> J["Hit Test<br/>&rarr; Select Body"]
+                F --> K["Reset to Overview"]
+
+                G --> L["updateCamera()<br/>Spherical &rarr; Cartesian"]
+                H --> L
+                I --> L
+                K --> L
+
+                L --> M["cameraNode.position<br/>cameraNode.look(at:)"]
+
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style L fill:#1a2a1a,stroke:#44aa44
+                style J fill:#2a1a2a,stroke:#aa44ff
+        </div>
+    </div>
+
+    <!-- Camera Geometry -->
+    <div class="deep-dive">
+        <h2>Camera Spherical Coordinates</h2>
+        <p>The camera orbits a target point at a given distance, controlled by azimuth and elevation angles:</p>
+
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 400 320" width="380" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="400" height="320" fill="#0d0d1a" rx="8"/>
+
+            <!-- Axes -->
+            <line x1="180" y1="200" x2="350" y2="250" stroke="#555577" stroke-width="1"/>
+            <text x="355" y="255" fill="#555577" font-size="10">x</text>
+            <line x1="180" y1="200" x2="180" y2="50" stroke="#555577" stroke-width="1"/>
+            <text x="185" y="45" fill="#555577" font-size="10">y (up)</text>
+            <line x1="180" y1="200" x2="50" y2="250" stroke="#555577" stroke-width="1"/>
+            <text x="35" y="255" fill="#555577" font-size="10">z</text>
+
+            <!-- Target point -->
+            <circle cx="180" cy="200" r="6" fill="#ffaa33"/>
+            <text x="190" y="215" fill="#ffaa33" font-size="11" font-weight="600">target</text>
+
+            <!-- Distance line to camera -->
+            <line x1="180" y1="200" x2="310" y2="90" stroke="#66ccff" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="255" y="138" fill="#66ccff" font-size="11" font-weight="600">d</text>
+            <text x="238" y="152" fill="#556677" font-size="9">distance</text>
+
+            <!-- Camera -->
+            <rect x="298" y="74" width="24" height="18" fill="#4488ff" rx="4"/>
+            <polygon points="310,74 306,65 314,65" fill="#4488ff"/>
+            <text x="310" y="62" fill="#4488ff" font-size="10" font-weight="600" text-anchor="middle">cam</text>
+
+            <!-- Horizontal projection -->
+            <line x1="180" y1="200" x2="310" y2="220" stroke="#888" stroke-width="1" stroke-dasharray="2,2"/>
+            <line x1="310" y1="220" x2="310" y2="90" stroke="#888" stroke-width="1" stroke-dasharray="2,2"/>
+
+            <!-- Azimuth angle -->
+            <path d="M 220 215 A 50 25 0 0 0 250 210" fill="none" stroke="#cc88ff" stroke-width="1.5"/>
+            <text x="238" y="230" fill="#cc88ff" font-size="12" font-weight="600">&theta;</text>
+            <text x="230" y="245" fill="#556677" font-size="9">azimuth</text>
+
+            <!-- Elevation angle -->
+            <path d="M 280 190 A 40 40 0 0 1 295 160" fill="none" stroke="#88ddaa" stroke-width="1.5"/>
+            <text x="295" y="180" fill="#88ddaa" font-size="12" font-weight="600">&phi;</text>
+            <text x="290" y="195" fill="#556677" font-size="9">elevation</text>
+
+            <!-- Formulas -->
+            <rect x="20" y="15" width="220" height="75" fill="#12121f" stroke="#1e1e3a" rx="6"/>
+            <text x="35" y="33" fill="#88bbff" font-size="10" font-weight="600">Position from spherical coords:</text>
+            <text x="35" y="50" fill="#66ccff" font-size="10" font-family="Menlo, monospace">x = d &middot; cos(&phi;) &middot; sin(&theta;)</text>
+            <text x="35" y="65" fill="#88ddaa" font-size="10" font-family="Menlo, monospace">y = d &middot; sin(&phi;)</text>
+            <text x="35" y="80" fill="#cc88ff" font-size="10" font-family="Menlo, monospace">z = d &middot; cos(&phi;) &middot; cos(&theta;)</text>
+
+            <!-- Gesture labels -->
+            <rect x="240" y="260" width="145" height="50" fill="#12121f" stroke="#1e1e3a" rx="6"/>
+            <text x="255" y="278" fill="#ffaa33" font-size="9" font-weight="600">1-finger drag</text>
+            <text x="255" y="291" fill="#888" font-size="9">&rarr; moves target</text>
+            <text x="255" y="304" fill="#ffaa33" font-size="9" font-weight="600">2-finger drag</text>
+
+            <rect x="15" y="260" width="145" height="50" fill="#12121f" stroke="#1e1e3a" rx="6"/>
+            <text x="30" y="278" fill="#ffaa33" font-size="9" font-weight="600">2-finger drag</text>
+            <text x="30" y="291" fill="#888" font-size="9">&rarr; changes &theta; and &phi;</text>
+            <text x="30" y="304" fill="#ffaa33" font-size="9" font-weight="600">Pinch &rarr; changes d</text>
+        </svg>
+        </div>
+    </div>
+
+    <!-- Rendering Pipeline -->
+    <div class="diagram-section">
+        <h2>Scene Graph</h2>
+        <div class="mermaid">
+            graph TD
+                A["SCNScene"] --> B["Camera<br/>(Custom Spherical Controller)"]
+                A --> C["Starfield<br/>(8,920 HYG stars, 4 tiers,<br/>B-V colour, r=500)"]
+                A --> D["Sun Node"]
+                A --> E["Planet Nodes &times;9<br/>(IAU Rotation)"]
+                A --> F["Moon Nodes &times;16<br/>(Tidally Locked)"]
+                A --> G["Orbit Paths &times;9"]
+                A --> H2["Lights<br/>(Omni + Ambient)"]
+
+                D --> D1["Emissive Sphere<br/>(Procedural Granulation)"]
+                D --> D2["4 Glow Layers<br/>(Radial Gradient, Additive)"]
+
+                E --> E1["PBR Sphere<br/>(NASA/Cassini Textures)"]
+                E --> E2["Saturn: Custom Ring Disc<br/>(Radial UVs, Colour + Alpha)"]
+
+                F --> F1["PBR Sphere<br/>(NASA/Galileo Textures)"]
+
+                C --> C1["~120 Named Stars<br/>(Label Projection)"]
+
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style D fill:#3a2a0a,stroke:#ffaa33
+                style E fill:#1a1a3e,stroke:#4488ff
+                style F fill:#1a1a3e,stroke:#888888
+                style C fill:#1a1a3e,stroke:#88bbff
+        </div>
+    </div>
+
+    <!-- Orbital Mechanics Deep Dive -->
+    <div class="deep-dive">
+        <h2>Orbital Mechanics Pipeline</h2>
+
+        <h3>From Clock to Coordinates</h3>
+        <p>Every frame, the app converts wall-clock time into planet positions through classical orbital mechanics:</p>
+
+        <div class="pipeline">
+            <div class="stage">
+                <div class="stage-num">1</div>
+                <div class="stage-content">
+                    <strong>Julian Date</strong> &mdash; Convert calendar date to Julian Date Number (Meeus algorithm), then to centuries since J2000.0 epoch (2000-01-01T12:00:00 TT).
+                </div>
+            </div>
+            <div class="stage">
+                <div class="stage-num">2</div>
+                <div class="stage-content">
+                    <strong>Current Elements</strong> &mdash; Each planet's six orbital elements computed from base values + linear rates &times; T centuries. Data from JPL (Standish, 1992).
+                </div>
+            </div>
+            <div class="stage">
+                <div class="stage-num">3</div>
+                <div class="stage-content">
+                    <strong>Mean Anomaly</strong> &mdash; M = L &minus; &omega;&#772; (mean longitude minus longitude of perihelion). Normalised to [0&deg;, 360&deg;).
+                </div>
+            </div>
+            <div class="stage">
+                <div class="stage-num">4</div>
+                <div class="stage-content">
+                    <strong>Kepler's Equation</strong> &mdash; Solve E &minus; e&middot;sin(E) = M via Newton-Raphson. Converges in 3&ndash;6 iterations for planetary eccentricities.
+                </div>
+            </div>
+            <div class="stage">
+                <div class="stage-num">5</div>
+                <div class="stage-content">
+                    <strong>True Anomaly</strong> &mdash; Convert eccentric anomaly E to true anomaly &nu; using the two-argument atan2 formula.
+                </div>
+            </div>
+            <div class="stage">
+                <div class="stage-num">6</div>
+                <div class="stage-content">
+                    <strong>Heliocentric Coordinates</strong> &mdash; Compute (x, y, z) in the ecliptic plane from r, &nu;, and the orientation angles I, &omega;&#772;, &Omega;.
+                </div>
+            </div>
+        </div>
+
+        <h3>Orbital Elements</h3>
+        <p>Each planet's orbit is an ellipse defined by six Keplerian elements:</p>
+
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 500 340" width="460" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <!-- Background -->
+            <rect width="500" height="340" fill="#0d0d1a" rx="8"/>
+
+            <!-- Ecliptic plane reference line -->
+            <line x1="40" y1="200" x2="460" y2="200" stroke="#333355" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="465" y="204" fill="#555577" font-size="10" text-anchor="start">ecliptic</text>
+
+            <!-- Orbit ellipse -->
+            <ellipse cx="270" cy="180" rx="180" ry="120" fill="none" stroke="#ffaa33" stroke-width="1.5" transform="rotate(-15, 270, 180)"/>
+
+            <!-- Sun at focus -->
+            <circle cx="210" cy="190" r="8" fill="#ffdd66"/>
+            <circle cx="210" cy="190" r="12" fill="#ffaa33" opacity="0.3"/>
+            <text x="210" y="218" fill="#ffdd66" font-size="11" text-anchor="middle" font-weight="600">Sun</text>
+
+            <!-- Semi-major axis line -->
+            <line x1="93" y1="173" x2="443" y2="187" stroke="#66ccff" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="350" y="175" fill="#66ccff" font-size="11" font-weight="600">a</text>
+            <text x="350" y="188" fill="#556677" font-size="9">semi-major axis</text>
+
+            <!-- Planet position -->
+            <circle cx="380" cy="120" r="5" fill="#4488ff"/>
+            <text x="392" y="115" fill="#4488ff" font-size="11" font-weight="600">Planet</text>
+
+            <!-- True anomaly arc -->
+            <path d="M 230 188 A 30 30 0 0 0 250 170" fill="none" stroke="#88ddaa" stroke-width="1.5"/>
+            <text x="248" y="164" fill="#88ddaa" font-size="12" font-weight="600">&nu;</text>
+            <text x="233" y="155" fill="#556677" font-size="9">true anomaly</text>
+
+            <!-- r vector (Sun to planet) -->
+            <line x1="210" y1="190" x2="380" y2="120" stroke="#ff8866" stroke-width="1.2"/>
+            <text x="300" y="142" fill="#ff8866" font-size="11" font-weight="600">r</text>
+
+            <!-- Perihelion marker -->
+            <circle cx="93" cy="173" r="3" fill="#cc88ff"/>
+            <text x="68" y="163" fill="#cc88ff" font-size="10">perihelion</text>
+
+            <!-- Aphelion marker -->
+            <circle cx="443" cy="187" r="3" fill="#cc88ff" opacity="0.5"/>
+            <text x="430" y="210" fill="#cc88ff" font-size="10" opacity="0.6">aphelion</text>
+
+            <!-- Ascending node -->
+            <circle cx="170" cy="200" r="4" fill="#ffaa33" opacity="0.7"/>
+            <text x="140" y="230" fill="#ffaa33" font-size="10">&Omega; ascending</text>
+            <text x="152" y="242" fill="#ffaa33" font-size="10">node</text>
+
+            <!-- Inclination arc -->
+            <path d="M 300 200 A 60 60 0 0 1 310 175" fill="none" stroke="#cc88ff" stroke-width="1.2"/>
+            <text x="315" y="192" fill="#cc88ff" font-size="11" font-weight="600">I</text>
+            <text x="325" y="205" fill="#556677" font-size="9">inclination</text>
+
+            <!-- Eccentricity label -->
+            <text x="245" y="265" fill="#88ddaa" font-size="10">e = eccentricity (shape)</text>
+            <text x="245" y="280" fill="#66ccff" font-size="10">a = semi-major axis (size)</text>
+            <text x="245" y="295" fill="#cc88ff" font-size="10">I = inclination (tilt)</text>
+            <text x="245" y="310" fill="#ffaa33" font-size="10">&Omega; = longitude of ascending node</text>
+            <text x="245" y="325" fill="#ff8866" font-size="10">&omega;&#772; = longitude of perihelion</text>
+
+            <!-- Legend box -->
+            <rect x="30" y="260" width="190" height="70" fill="#12121f" stroke="#1e1e3a" rx="6"/>
+            <text x="45" y="280" fill="#e0e0f0" font-size="11" font-weight="600">Kepler's Equation</text>
+            <text x="45" y="298" fill="#66ccff" font-size="11" font-family="Menlo, monospace">E - e&middot;sin(E) = M</text>
+            <text x="45" y="316" fill="#666688" font-size="9">Solve for eccentric anomaly E</text>
+        </svg>
+        </div>
+
+        <h3>Kepler's Equation Solver</h3>
+        <div class="math">
+            <span class="heading">Newton-Raphson iteration</span>
+            <span class="var">E</span><sub>0</sub> <span class="op">=</span> <span class="var">M</span> <span class="op">+</span> <span class="var">e</span> <span class="op">&middot;</span> <span class="fn">sin</span>(<span class="var">M</span>)  <span class="comment">// initial guess</span><br>
+            <span class="var">E</span><sub>n+1</sub> <span class="op">=</span> <span class="var">E</span><sub>n</sub> <span class="op">&minus;</span> (<span class="var">E</span><sub>n</sub> <span class="op">&minus;</span> <span class="var">e</span> <span class="op">&middot;</span> <span class="fn">sin</span>(<span class="var">E</span><sub>n</sub>) <span class="op">&minus;</span> <span class="var">M</span>) <span class="op">/</span> (<span class="num">1</span> <span class="op">&minus;</span> <span class="var">e</span> <span class="op">&middot;</span> <span class="fn">cos</span>(<span class="var">E</span><sub>n</sub>))  <span class="comment">// iterate until |&Delta;E| &lt; 10<sup>&minus;8</sup></span>
+        </div>
+
+        <h3>Scale Transformations</h3>
+
+        <div class="info-box">
+            <div class="label">Distance Scaling (Logarithmic)</div>
+            <p><code>sceneDistance = log(1 + AU / 0.5) &times; 15</code></p>
+            <p>Mercury &asymp; 7.5, Earth &asymp; 16.5, Jupiter &asymp; 36.5, Neptune &asymp; 63 scene units</p>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 460 200" width="440" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="460" height="200" fill="#0d0d1a" rx="8"/>
+
+            <!-- Axes -->
+            <line x1="60" y1="170" x2="440" y2="170" stroke="#333355" stroke-width="1"/>
+            <line x1="60" y1="170" x2="60" y2="20" stroke="#333355" stroke-width="1"/>
+            <text x="250" y="195" fill="#666688" font-size="9" text-anchor="middle">Real Distance (AU)</text>
+            <text x="20" y="95" fill="#666688" font-size="9" text-anchor="middle" transform="rotate(-90, 20, 95)">Scene Units</text>
+
+            <!-- Log curve -->
+            <path d="M 60,170 C 80,120 100,90 120,75 L 160,55 L 200,42 L 260,30 L 340,22 L 440,15" fill="none" stroke="#ffaa33" stroke-width="2"/>
+
+            <!-- Linear reference (would go off screen) -->
+            <line x1="60" y1="170" x2="130" y2="20" stroke="#ff4444" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+            <text x="135" y="18" fill="#ff4444" font-size="8" opacity="0.5">linear (unusable)</text>
+
+            <!-- Planet markers on curve -->
+            <!-- Mercury 0.39 AU -> 7.5 -->
+            <circle cx="75" cy="142" r="4" fill="#998877"/>
+            <text x="80" y="138" fill="#998877" font-size="8">Me</text>
+
+            <!-- Venus 0.72 -> 11.3 -->
+            <circle cx="87" cy="125" r="4" fill="#ccbb88"/>
+            <text x="92" y="121" fill="#ccbb88" font-size="8">V</text>
+
+            <!-- Earth 1.0 -> 16.5 -->
+            <circle cx="97" cy="112" r="5" fill="#4488cc"/>
+            <text x="103" y="108" fill="#4488cc" font-size="8">E</text>
+
+            <!-- Mars 1.52 -> 20.2 -->
+            <circle cx="117" cy="96" r="4" fill="#cc6633"/>
+            <text x="122" y="92" fill="#cc6633" font-size="8">Ma</text>
+
+            <!-- Jupiter 5.2 -> 36.5 -->
+            <circle cx="197" cy="55" r="5" fill="#dd9944"/>
+            <text x="203" y="51" fill="#dd9944" font-size="8">J</text>
+
+            <!-- Saturn 9.5 -> 44.6 -->
+            <circle cx="253" cy="42" r="5" fill="#ccaa66"/>
+            <text x="259" y="38" fill="#ccaa66" font-size="8">S</text>
+
+            <!-- Uranus 19.2 -> 55.5 -->
+            <circle cx="340" cy="28" r="4" fill="#66aaaa"/>
+            <text x="346" y="24" fill="#66aaaa" font-size="8">U</text>
+
+            <!-- Neptune 30 -> 63 -->
+            <circle cx="420" cy="19" r="4" fill="#4466bb"/>
+            <text x="408" y="14" fill="#4466bb" font-size="8">N</text>
+
+            <!-- AU tick marks -->
+            <text x="60" y="182" fill="#555577" font-size="8" text-anchor="middle">0</text>
+            <text x="97" y="182" fill="#555577" font-size="8" text-anchor="middle">1</text>
+            <text x="197" y="182" fill="#555577" font-size="8" text-anchor="middle">5</text>
+            <text x="253" y="182" fill="#555577" font-size="8" text-anchor="middle">10</text>
+            <text x="340" y="182" fill="#555577" font-size="8" text-anchor="middle">20</text>
+            <text x="420" y="182" fill="#555577" font-size="8" text-anchor="middle">30</text>
+        </svg>
+        </div>
+
+        <div class="info-box">
+            <div class="label">Radius Scaling (Square Root)</div>
+            <p><code>sceneRadius = &radic;(km) &times; 0.00125</code></p>
+            <p>Jupiter &asymp; 0.33 (3.3&times; Earth), Earth &asymp; 0.10, Mercury &asymp; 0.06. Min 0.03 planets, 0.012 moons.</p>
+        </div>
+
+        <div class="info-box">
+            <div class="label">Moon Distance Compression</div>
+            <p><code>moonSceneDist = parentSceneRadius &times; (realRatio<sup>0.4</sup>) &times; 1.5</code></p>
+            <p>Earth's Moon: 60&times; &rarr; 8.8&times; parent radius. Preserves relative ordering of moons.</p>
+        </div>
+
+        <h3>Planet Size Comparison</h3>
+        <p>Real radii vs scene radii (&radic; scaling). The bars show how sqrt compresses the 175:1 real range into a visually useful 5.5:1 range:</p>
+
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 480 300" width="460" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="480" height="300" fill="#0d0d1a" rx="8"/>
+
+            <!-- Title -->
+            <text x="240" y="24" fill="#88bbff" font-size="12" font-weight="600" text-anchor="middle">Scene Radius (sqrt scaling)</text>
+
+            <!-- Grid lines -->
+            <line x1="100" y1="40" x2="100" y2="270" stroke="#1e1e3a" stroke-width="1"/>
+            <line x1="100" y1="270" x2="460" y2="270" stroke="#1e1e3a" stroke-width="1"/>
+            <line x1="200" y1="40" x2="200" y2="270" stroke="#1e1e3a" stroke-width="0.5" stroke-dasharray="2,4"/>
+            <line x1="300" y1="40" x2="300" y2="270" stroke="#1e1e3a" stroke-width="0.5" stroke-dasharray="2,4"/>
+            <line x1="400" y1="40" x2="400" y2="270" stroke="#1e1e3a" stroke-width="0.5" stroke-dasharray="2,4"/>
+            <text x="100" y="284" fill="#555577" font-size="9" text-anchor="middle">0</text>
+            <text x="200" y="284" fill="#555577" font-size="9" text-anchor="middle">0.1</text>
+            <text x="300" y="284" fill="#555577" font-size="9" text-anchor="middle">0.2</text>
+            <text x="400" y="284" fill="#555577" font-size="9" text-anchor="middle">0.3</text>
+
+            <!-- Jupiter -->
+            <text x="95" y="60" fill="#e0e0f0" font-size="10" text-anchor="end">Jupiter</text>
+            <rect x="100" y="50" width="331" height="16" fill="#dd9944" rx="2"/>
+            <text x="436" y="62" fill="#888" font-size="9">0.331</text>
+
+            <!-- Saturn -->
+            <text x="95" y="84" fill="#e0e0f0" font-size="10" text-anchor="end">Saturn</text>
+            <rect x="100" y="74" width="302" height="16" fill="#ccaa66" rx="2"/>
+            <text x="407" y="86" fill="#888" font-size="9">0.302</text>
+
+            <!-- Uranus -->
+            <text x="95" y="108" fill="#e0e0f0" font-size="10" text-anchor="end">Uranus</text>
+            <rect x="100" y="98" width="199" height="16" fill="#66aaaa" rx="2"/>
+            <text x="304" y="110" fill="#888" font-size="9">0.199</text>
+
+            <!-- Neptune -->
+            <text x="95" y="132" fill="#e0e0f0" font-size="10" text-anchor="end">Neptune</text>
+            <rect x="100" y="122" width="196" height="16" fill="#4466bb" rx="2"/>
+            <text x="301" y="134" fill="#888" font-size="9">0.196</text>
+
+            <!-- Earth -->
+            <text x="95" y="156" fill="#e0e0f0" font-size="10" text-anchor="end">Earth</text>
+            <rect x="100" y="146" width="100" height="16" fill="#4488cc" rx="2"/>
+            <text x="205" y="158" fill="#888" font-size="9">0.100</text>
+
+            <!-- Venus -->
+            <text x="95" y="180" fill="#e0e0f0" font-size="10" text-anchor="end">Venus</text>
+            <rect x="100" y="170" width="97" height="16" fill="#ccbb88" rx="2"/>
+            <text x="202" y="182" fill="#888" font-size="9">0.097</text>
+
+            <!-- Mars -->
+            <text x="95" y="204" fill="#e0e0f0" font-size="10" text-anchor="end">Mars</text>
+            <rect x="100" y="194" width="73" height="16" fill="#cc6633" rx="2"/>
+            <text x="178" y="206" fill="#888" font-size="9">0.073</text>
+
+            <!-- Mercury -->
+            <text x="95" y="228" fill="#e0e0f0" font-size="10" text-anchor="end">Mercury</text>
+            <rect x="100" y="218" width="62" height="16" fill="#998877" rx="2"/>
+            <text x="167" y="230" fill="#888" font-size="9">0.062</text>
+
+            <!-- Moon (reference) -->
+            <text x="95" y="252" fill="#999" font-size="10" text-anchor="end">Moon</text>
+            <rect x="100" y="242" width="27" height="16" fill="#888888" rx="2"/>
+            <text x="132" y="254" fill="#888" font-size="9">0.027</text>
+        </svg>
+        </div>
+    </div>
+
+    <!-- SwiftUI View Hierarchy -->
+    <div class="diagram-section">
+        <h2>SwiftUI View Hierarchy</h2>
+        <div class="mermaid">
+            graph TD
+                A["SolarSystemApp"] --> B["ContentView"]
+                B --> C["SolarSystemSceneView<br/>(UIViewRepresentable)"]
+                B --> D["Labels Overlay<br/>(planets, moons, stars)"]
+                B --> E["InfoPanelView<br/>(date, body info)"]
+                B --> F["Controls Bar<br/>(speed, toggles, picker)"]
+                B --> Z["Zoom Slider<br/>(log-mapped)"]
+
+                C --> G["SCNView + Coordinator"]
+                G --> H["Custom Gestures<br/>(pan, orbit, pinch, tap)"]
+
+                I["SolarSystemViewModel"] --> C
+                I --> D
+                I --> E
+                I --> Z
+
+                J["OrbitalMechanics"] --> I
+                K["SceneBuilder"] --> I
+                L2["UserDefaults"] --> I
+
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style I fill:#1a2a1a,stroke:#44aa44
+                style D fill:#2a1a2a,stroke:#aa44ff
+                style G fill:#1a1a3e,stroke:#4488ff
+        </div>
+    </div>
+
+    <!-- Data Model -->
+    <div class="diagram-section">
+        <h2>Data Model</h2>
+        <div class="mermaid">
+            graph TD
+                A["CelestialBody"] --> B["name, id, type"]
+                A --> C["orbitalElements?<br/>(planets)"]
+                A --> D["moonElements?<br/>(moons)"]
+                A --> E["physical: PhysicalProperties"]
+                A --> F2["rotation: RotationProperties"]
+                A --> F["moons: [CelestialBody]"]
+                A --> G["position: SIMD3&lt;Double&gt;"]
+
+                C --> H["OrbitalElements<br/>a, e, I, L, &omega;&#772;, &Omega;<br/>+ rates per century"]
+
+                D --> I["MoonOrbitalElements<br/>semiMajorAxis, period,<br/>eccentricity, inclination"]
+
+                E --> J["radiusKm, color,<br/>emissive, hasRings"]
+
+                F2 --> J2["periodHours, obliquity,<br/>w0, tidallyLocked"]
+
+                K["ScreenLabel"] --> L["id, name, screenPoint,<br/>isMoon, isStar, priority"]
+
+                M["NamedStar"] --> N["name, position,<br/>magnitude"]
+
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style H fill:#1a1a3e,stroke:#4488ff
+                style K fill:#2a1a2a,stroke:#aa44ff
+                style M fill:#1a1a3e,stroke:#88bbff
+                style F2 fill:#1a2a1a,stroke:#44aa44
+        </div>
+    </div>
+
+    <!-- Star Catalogue -->
+    <div class="deep-dive">
+        <h2>Real Star Catalogue (HYG v38)</h2>
+
+        <p>8,920 stars from the Hipparcos/Yale/Gliese amalgamation, filtered to naked-eye visibility (magnitude &le; 6.5). Each star has right ascension, declination, visual magnitude, and B-V colour index.</p>
+
+        <h3>Celestial Sphere Mapping</h3>
+        <div class="math">
+            <span class="heading">RA/Dec to SceneKit coordinates (sphere radius = 500)</span>
+            <span class="var">ra</span> <span class="op">=</span> <span class="var">raHours</span> <span class="op">&times;</span> (<span class="num">&pi;</span> <span class="op">/</span> <span class="num">12</span>)  <span class="comment">// hours to radians</span><br>
+            <span class="var">dec</span> <span class="op">=</span> <span class="var">decDeg</span> <span class="op">&times;</span> (<span class="num">&pi;</span> <span class="op">/</span> <span class="num">180</span>)  <span class="comment">// degrees to radians</span><br>
+            <span class="var">x</span> <span class="op">=</span> <span class="num">500</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">dec</span>) <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">ra</span>)<br>
+            <span class="var">y</span> <span class="op">=</span> <span class="num">500</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">dec</span>)<br>
+            <span class="var">z</span> <span class="op">=</span> <span class="num">500</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">dec</span>) <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">ra</span>)
+        </div>
+
+        <h3>B-V Colour Mapping</h3>
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 460 80" width="440" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="460" height="80" fill="#0d0d1a" rx="8"/>
+            <defs>
+                <linearGradient id="bvGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#7088ff"/>
+                    <stop offset="20%" style="stop-color:#aaccff"/>
+                    <stop offset="35%" style="stop-color:#ffffff"/>
+                    <stop offset="50%" style="stop-color:#ffee88"/>
+                    <stop offset="65%" style="stop-color:#ffcc44"/>
+                    <stop offset="80%" style="stop-color:#ff8833"/>
+                    <stop offset="100%" style="stop-color:#ff4422"/>
+                </linearGradient>
+            </defs>
+            <rect x="30" y="15" width="400" height="20" fill="url(#bvGrad)" rx="4"/>
+            <text x="30" y="52" fill="#7088ff" font-size="9">B-V &minus;0.4</text>
+            <text x="105" y="52" fill="#aaccff" font-size="9">0.0</text>
+            <text x="200" y="52" fill="#ffee88" font-size="9">0.4</text>
+            <text x="300" y="52" fill="#ff8833" font-size="9">1.0</text>
+            <text x="400" y="52" fill="#ff4422" font-size="9">2.0</text>
+            <text x="30" y="70" fill="#666688" font-size="8">O/B hot blue</text>
+            <text x="120" y="70" fill="#666688" font-size="8">A white</text>
+            <text x="200" y="70" fill="#666688" font-size="8">F/G yellow</text>
+            <text x="300" y="70" fill="#666688" font-size="8">K orange</text>
+            <text x="400" y="70" fill="#666688" font-size="8">M red</text>
+        </svg>
+        </div>
+
+        <h3>Brightness Tiers</h3>
+        <div class="info-box">
+            <div class="label">4 point-size tiers by magnitude</div>
+            <p>mag &lt; 1.5: 3&ndash;8px (~20 stars: Sirius, Vega, Arcturus) &bull; mag 1.5&ndash;3.5: 2&ndash;5px (~200 stars) &bull; mag 3.5&ndash;5.0: 1.5&ndash;3px (~1,500 stars) &bull; mag 5.0&ndash;6.5: 0.8&ndash;2px (~7,000 stars, Milky Way structure)</p>
+        </div>
+    </div>
+
+    <!-- Rotation System -->
+    <div class="deep-dive">
+        <h2>IAU Rotation Model</h2>
+
+        <p>Every body rotates at its real sidereal rate, with correct axial tilt (obliquity) and prime meridian orientation at J2000.0:</p>
+
+        <div class="math">
+            <span class="heading">Rotation angle at time T</span>
+            <span class="var">spin</span> <span class="op">=</span> <span class="var">W</span><sub>0</sub> <span class="op">+</span> (<span class="var">daysSinceJ2000</span> <span class="op">/</span> <span class="var">periodDays</span>) <span class="op">&times;</span> <span class="num">2&pi;</span><br>
+            <br>
+            <span class="heading">Applied as Euler angles</span>
+            <span class="var">node.eulerAngles</span> <span class="op">=</span> (<span class="var">obliquity</span>, <span class="var">spin</span>, <span class="num">0</span>)
+        </div>
+
+        <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+        <svg viewBox="0 0 460 200" width="440" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, system-ui, sans-serif;">
+            <rect width="460" height="200" fill="#0d0d1a" rx="8"/>
+            <text x="230" y="20" fill="#88bbff" font-size="11" font-weight="600" text-anchor="middle">Axial Tilts (to scale)</text>
+
+            <!-- Reference vertical line -->
+            <line x1="50" y1="40" x2="50" y2="185" stroke="#333355" stroke-width="1" stroke-dasharray="2,3"/>
+
+            <!-- Mercury 0.03° - basically vertical -->
+            <line x1="65" y1="45" x2="65" y2="85" stroke="#998877" stroke-width="3" stroke-linecap="round"/>
+            <text x="65" y="95" fill="#998877" font-size="8" text-anchor="middle">Me</text>
+            <text x="65" y="105" fill="#666688" font-size="7" text-anchor="middle">0&deg;</text>
+
+            <!-- Jupiter 3.1° -->
+            <line x1="110" y1="44" x2="112" y2="84" stroke="#dd9944" stroke-width="3" stroke-linecap="round"/>
+            <text x="111" y="95" fill="#dd9944" font-size="8" text-anchor="middle">Ju</text>
+            <text x="111" y="105" fill="#666688" font-size="7" text-anchor="middle">3&deg;</text>
+
+            <!-- Earth 23.4° -->
+            <line x1="155" y1="38" x2="172" y2="75" stroke="#4488cc" stroke-width="3" stroke-linecap="round"/>
+            <text x="163" y="95" fill="#4488cc" font-size="8" text-anchor="middle">E</text>
+            <text x="163" y="105" fill="#666688" font-size="7" text-anchor="middle">23&deg;</text>
+
+            <!-- Mars 25.2° -->
+            <line x1="205" y1="37" x2="223" y2="74" stroke="#cc6633" stroke-width="3" stroke-linecap="round"/>
+            <text x="214" y="95" fill="#cc6633" font-size="8" text-anchor="middle">Ma</text>
+            <text x="214" y="105" fill="#666688" font-size="7" text-anchor="middle">25&deg;</text>
+
+            <!-- Saturn 26.7° -->
+            <line x1="255" y1="36" x2="275" y2="73" stroke="#ccaa66" stroke-width="3" stroke-linecap="round"/>
+            <text x="265" y="95" fill="#ccaa66" font-size="8" text-anchor="middle">Sa</text>
+            <text x="265" y="105" fill="#666688" font-size="7" text-anchor="middle">27&deg;</text>
+
+            <!-- Neptune 28.3° -->
+            <line x1="305" y1="35" x2="327" y2="72" stroke="#4466bb" stroke-width="3" stroke-linecap="round"/>
+            <text x="316" y="95" fill="#4466bb" font-size="8" text-anchor="middle">Ne</text>
+            <text x="316" y="105" fill="#666688" font-size="7" text-anchor="middle">28&deg;</text>
+
+            <!-- Uranus 97.8° - on its side! -->
+            <line x1="365" y1="60" x2="405" y2="55" stroke="#66aaaa" stroke-width="3" stroke-linecap="round"/>
+            <text x="385" y="45" fill="#66aaaa" font-size="8" text-anchor="middle">Ur</text>
+            <text x="385" y="75" fill="#666688" font-size="7" text-anchor="middle">98&deg;!</text>
+
+            <!-- Tidally locked note -->
+            <rect x="50" y="120" width="360" height="65" fill="#12121f" stroke="#1e1e3a" rx="6"/>
+            <text x="65" y="138" fill="#ffaa33" font-size="10" font-weight="600">Tidally Locked Moons</text>
+            <text x="65" y="155" fill="#c0c0e0" font-size="9">Rotation period = orbital period. Same face always toward parent.</text>
+            <text x="65" y="172" fill="#888" font-size="9">Earth's Moon, all 4 Galilean moons, all 7 Saturn moons, Phobos, Deimos</text>
+        </svg>
+        </div>
+
+        <div class="info-box">
+            <div class="label">Saturn's Rings</div>
+            <p>Rings share Saturn's axial tilt but do not spin with the planet. Each frame: <code>ringNode.eulerAngles.y = -spin</code> cancels the parent's rotation.</p>
+        </div>
+    </div>
+
+</body>
+</html>

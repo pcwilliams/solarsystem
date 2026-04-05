@@ -1,0 +1,637 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5B0000000000000000000020 /* SolarSystemApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000001 /* SolarSystemApp.swift */; };
+		5B0000000000000000000021 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000002 /* ContentView.swift */; };
+		5B0000000000000000000022 /* CelestialBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000003 /* CelestialBody.swift */; };
+		5B0000000000000000000023 /* OrbitalElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000004 /* OrbitalElements.swift */; };
+		5B0000000000000000000024 /* SolarSystemData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000005 /* SolarSystemData.swift */; };
+		5B0000000000000000000025 /* OrbitalMechanics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000006 /* OrbitalMechanics.swift */; };
+		5B0000000000000000000026 /* SceneBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000007 /* SceneBuilder.swift */; };
+		5B0000000000000000000027 /* TextureGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000008 /* TextureGenerator.swift */; };
+		5B0000000000000000000028 /* SolarSystemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000009 /* SolarSystemViewModel.swift */; };
+		5B0000000000000000000029 /* SolarSystemSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000A /* SolarSystemSceneView.swift */; };
+		5B000000000000000000002A /* InfoPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000B /* InfoPanelView.swift */; };
+		5B000000000000000000002B /* SCNVector3+Math.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000C /* SCNVector3+Math.swift */; };
+		5B00000000000000000000B0 /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000B1 /* CreditsView.swift */; };
+		5B000000000000000000002C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000D /* Assets.xcassets */; };
+		5B0000000000000000000060 /* earth_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000070 /* earth_2k.jpg */; };
+		5B0000000000000000000061 /* moon_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000071 /* moon_2k.jpg */; };
+		5B0000000000000000000062 /* jupiter_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000072 /* jupiter_2k.jpg */; };
+		5B0000000000000000000063 /* saturn_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000073 /* saturn_2k.jpg */; };
+		5B0000000000000000000064 /* mars_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000074 /* mars_2k.jpg */; };
+		5B0000000000000000000065 /* saturn_ring_color.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000075 /* saturn_ring_color.jpg */; };
+		5B0000000000000000000066 /* saturn_ring_alpha.gif in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000076 /* saturn_ring_alpha.gif */; };
+		5B0000000000000000000080 /* mercury_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000090 /* mercury_2k.jpg */; };
+		5B0000000000000000000081 /* venus_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000091 /* venus_2k.jpg */; };
+		5B0000000000000000000082 /* uranus_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000092 /* uranus_2k.jpg */; };
+		5B0000000000000000000083 /* neptune_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000093 /* neptune_2k.jpg */; };
+		5B0000000000000000000084 /* pluto_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000094 /* pluto_2k.jpg */; };
+		5B0000000000000000000085 /* io_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000095 /* io_2k.jpg */; };
+		5B0000000000000000000086 /* europa_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000096 /* europa_2k.jpg */; };
+		5B0000000000000000000087 /* ganymede_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000097 /* ganymede_2k.jpg */; };
+		5B0000000000000000000088 /* callisto_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000098 /* callisto_2k.jpg */; };
+		5B0000000000000000000089 /* stars.csv in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000099 /* stars.csv */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5B0000000000000000000057 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5B0000000000000000000040 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5B0000000000000000000047;
+			remoteInfo = SolarSystem;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5B0000000000000000000001 /* SolarSystemApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarSystemApp.swift; sourceTree = "<group>"; };
+		5B0000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5B0000000000000000000003 /* CelestialBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelestialBody.swift; sourceTree = "<group>"; };
+		5B0000000000000000000004 /* OrbitalElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitalElements.swift; sourceTree = "<group>"; };
+		5B0000000000000000000005 /* SolarSystemData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarSystemData.swift; sourceTree = "<group>"; };
+		5B0000000000000000000006 /* OrbitalMechanics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitalMechanics.swift; sourceTree = "<group>"; };
+		5B0000000000000000000007 /* SceneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneBuilder.swift; sourceTree = "<group>"; };
+		5B0000000000000000000008 /* TextureGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureGenerator.swift; sourceTree = "<group>"; };
+		5B0000000000000000000009 /* SolarSystemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarSystemViewModel.swift; sourceTree = "<group>"; };
+		5B000000000000000000000A /* SolarSystemSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolarSystemSceneView.swift; sourceTree = "<group>"; };
+		5B000000000000000000000B /* InfoPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoPanelView.swift; sourceTree = "<group>"; };
+		5B000000000000000000000C /* SCNVector3+Math.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SCNVector3+Math.swift"; sourceTree = "<group>"; };
+		5B00000000000000000000B1 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
+		5B000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5B000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5B000000000000000000000F /* SolarSystem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SolarSystem.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B0000000000000000000059 /* SolarSystemTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SolarSystemTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B0000000000000000000070 /* earth_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = earth_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000071 /* moon_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = moon_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000072 /* jupiter_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = jupiter_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000073 /* saturn_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = saturn_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000074 /* mars_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = mars_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000075 /* saturn_ring_color.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = saturn_ring_color.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000076 /* saturn_ring_alpha.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = saturn_ring_alpha.gif; sourceTree = "<group>"; };
+		5B0000000000000000000090 /* mercury_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = mercury_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000091 /* venus_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = venus_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000092 /* uranus_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = uranus_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000093 /* neptune_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = neptune_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000094 /* pluto_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = pluto_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000095 /* io_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = io_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000096 /* europa_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = europa_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000097 /* ganymede_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = ganymede_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000098 /* callisto_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = callisto_2k.jpg; sourceTree = "<group>"; };
+		5B0000000000000000000099 /* stars.csv */ = {isa = PBXFileReference; lastKnownFileType = text; path = stars.csv; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5B000000000000000000005A /* SolarSystemTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SolarSystemTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5B0000000000000000000049 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5B0000000000000000000055 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5B0000000000000000000030 /* root */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000031 /* SolarSystem */,
+				5B000000000000000000005A /* SolarSystemTests */,
+				5B0000000000000000000038 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000031 /* SolarSystem */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000032 /* App */,
+				5B0000000000000000000033 /* Models */,
+				5B0000000000000000000034 /* Views */,
+				5B0000000000000000000035 /* Services */,
+				5B0000000000000000000036 /* ViewModels */,
+				5B0000000000000000000037 /* Extensions */,
+				5B000000000000000000003A /* Textures */,
+				5B000000000000000000000D /* Assets.xcassets */,
+				5B000000000000000000000E /* Info.plist */,
+			);
+			path = SolarSystem;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000032 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000001 /* SolarSystemApp.swift */,
+				5B0000000000000000000002 /* ContentView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000033 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000003 /* CelestialBody.swift */,
+				5B0000000000000000000004 /* OrbitalElements.swift */,
+				5B0000000000000000000005 /* SolarSystemData.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000034 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5B000000000000000000000A /* SolarSystemSceneView.swift */,
+				5B000000000000000000000B /* InfoPanelView.swift */,
+				5B00000000000000000000B1 /* CreditsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000035 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000006 /* OrbitalMechanics.swift */,
+				5B0000000000000000000007 /* SceneBuilder.swift */,
+				5B0000000000000000000008 /* TextureGenerator.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000036 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000009 /* SolarSystemViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000037 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				5B000000000000000000000C /* SCNVector3+Math.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		5B000000000000000000003A /* Textures */ = {
+			isa = PBXGroup;
+			children = (
+				5B0000000000000000000070 /* earth_2k.jpg */,
+				5B0000000000000000000071 /* moon_2k.jpg */,
+				5B0000000000000000000072 /* jupiter_2k.jpg */,
+				5B0000000000000000000073 /* saturn_2k.jpg */,
+				5B0000000000000000000074 /* mars_2k.jpg */,
+				5B0000000000000000000075 /* saturn_ring_color.jpg */,
+				5B0000000000000000000076 /* saturn_ring_alpha.gif */,
+				5B0000000000000000000090 /* mercury_2k.jpg */,
+				5B0000000000000000000091 /* venus_2k.jpg */,
+				5B0000000000000000000092 /* uranus_2k.jpg */,
+				5B0000000000000000000093 /* neptune_2k.jpg */,
+				5B0000000000000000000094 /* pluto_2k.jpg */,
+				5B0000000000000000000095 /* io_2k.jpg */,
+				5B0000000000000000000096 /* europa_2k.jpg */,
+				5B0000000000000000000097 /* ganymede_2k.jpg */,
+				5B0000000000000000000098 /* callisto_2k.jpg */,
+				5B0000000000000000000099 /* stars.csv */,
+			);
+			path = Textures;
+			sourceTree = "<group>";
+		};
+		5B0000000000000000000038 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5B000000000000000000000F /* SolarSystem.app */,
+				5B0000000000000000000059 /* SolarSystemTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5B0000000000000000000047 /* SolarSystem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5B0000000000000000000044 /* Build configuration list for PBXNativeTarget "SolarSystem" */;
+			buildPhases = (
+				5B0000000000000000000048 /* Sources */,
+				5B0000000000000000000049 /* Frameworks */,
+				5B000000000000000000004A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SolarSystem;
+			productName = SolarSystem;
+			productReference = 5B000000000000000000000F /* SolarSystem.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5B0000000000000000000050 /* SolarSystemTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5B0000000000000000000051 /* Build configuration list for PBXNativeTarget "SolarSystemTests" */;
+			buildPhases = (
+				5B0000000000000000000054 /* Sources */,
+				5B0000000000000000000055 /* Frameworks */,
+				5B0000000000000000000056 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5B0000000000000000000058 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5B000000000000000000005A /* SolarSystemTests */,
+			);
+			name = SolarSystemTests;
+			productName = SolarSystemTests;
+			productReference = 5B0000000000000000000059 /* SolarSystemTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5B0000000000000000000040 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					5B0000000000000000000047 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					5B0000000000000000000050 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 5B0000000000000000000047;
+					};
+				};
+			};
+			buildConfigurationList = 5B0000000000000000000041 /* Build configuration list for PBXProject "SolarSystem" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5B0000000000000000000030;
+			productRefGroup = 5B0000000000000000000038 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5B0000000000000000000047 /* SolarSystem */,
+				5B0000000000000000000050 /* SolarSystemTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5B000000000000000000004A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B000000000000000000002C /* Assets.xcassets in Resources */,
+				5B0000000000000000000060 /* earth_2k.jpg in Resources */,
+				5B0000000000000000000061 /* moon_2k.jpg in Resources */,
+				5B0000000000000000000062 /* jupiter_2k.jpg in Resources */,
+				5B0000000000000000000063 /* saturn_2k.jpg in Resources */,
+				5B0000000000000000000064 /* mars_2k.jpg in Resources */,
+				5B0000000000000000000065 /* saturn_ring.jpg in Resources */,
+				5B0000000000000000000066 /* saturn_ring_alpha.gif in Resources */,
+				5B0000000000000000000080 /* mercury_2k.jpg in Resources */,
+				5B0000000000000000000081 /* venus_2k.jpg in Resources */,
+				5B0000000000000000000082 /* uranus_2k.jpg in Resources */,
+				5B0000000000000000000083 /* neptune_2k.jpg in Resources */,
+				5B0000000000000000000084 /* pluto_2k.jpg in Resources */,
+				5B0000000000000000000085 /* io_2k.jpg in Resources */,
+				5B0000000000000000000086 /* europa_2k.jpg in Resources */,
+				5B0000000000000000000087 /* ganymede_2k.jpg in Resources */,
+				5B0000000000000000000088 /* callisto_2k.jpg in Resources */,
+				5B0000000000000000000089 /* stars.csv in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5B0000000000000000000056 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5B0000000000000000000048 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B0000000000000000000020 /* SolarSystemApp.swift in Sources */,
+				5B0000000000000000000021 /* ContentView.swift in Sources */,
+				5B0000000000000000000022 /* CelestialBody.swift in Sources */,
+				5B0000000000000000000023 /* OrbitalElements.swift in Sources */,
+				5B0000000000000000000024 /* SolarSystemData.swift in Sources */,
+				5B0000000000000000000025 /* OrbitalMechanics.swift in Sources */,
+				5B0000000000000000000026 /* SceneBuilder.swift in Sources */,
+				5B0000000000000000000027 /* TextureGenerator.swift in Sources */,
+				5B0000000000000000000028 /* SolarSystemViewModel.swift in Sources */,
+				5B0000000000000000000029 /* SolarSystemSceneView.swift in Sources */,
+				5B000000000000000000002A /* InfoPanelView.swift in Sources */,
+				5B000000000000000000002B /* SCNVector3+Math.swift in Sources */,
+				5B00000000000000000000B0 /* CreditsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5B0000000000000000000054 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5B0000000000000000000058 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5B0000000000000000000047 /* SolarSystem */;
+			targetProxy = 5B0000000000000000000057 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		5B0000000000000000000042 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5B0000000000000000000043 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5B0000000000000000000045 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L7GB763YG3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SolarSystem/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SolarSystem;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		5B0000000000000000000046 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L7GB763YG3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SolarSystem/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SolarSystem;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystem;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		5B0000000000000000000052 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L7GB763YG3;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystemTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SolarSystem.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SolarSystem";
+			};
+			name = Debug;
+		};
+		5B0000000000000000000053 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = L7GB763YG3;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystemTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SolarSystem.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SolarSystem";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5B0000000000000000000041 /* Build configuration list for PBXProject "SolarSystem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B0000000000000000000042 /* Debug */,
+				5B0000000000000000000043 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5B0000000000000000000044 /* Build configuration list for PBXNativeTarget "SolarSystem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B0000000000000000000045 /* Debug */,
+				5B0000000000000000000046 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5B0000000000000000000051 /* Build configuration list for PBXNativeTarget "SolarSystemTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5B0000000000000000000052 /* Debug */,
+				5B0000000000000000000053 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = 5B0000000000000000000040 /* Project object */;
+}

@@ -1,0 +1,134 @@
+# SolarSystem
+
+A real-time solar system simulation for iPhone, powered by real orbital mechanics, NASA texture maps, and 8,920 real stars from the Hipparcos catalogue.
+
+![SolarSystem - Saturn with rings, moons, and real star names](https://pcwilliams.design/dev/solarsystem/solarsystem.png)
+
+## Features
+
+- **Accurate planetary positions** — Keplerian orbital elements from JPL calculate where every planet actually is right now
+- **NASA texture maps** — All 9 planets, Earth's Moon, Jupiter's Galilean moons, and Pluto use real imagery from NASA, USGS, and Cassini
+- **8,920 real stars** — Hipparcos catalogue with correct positions, magnitudes, and B-V colours. Recognisable constellations, Milky Way density
+- **Realistic rotation** — Every body spins at its real IAU sidereal rate with correct axial tilt. Venus rotates backwards, Uranus rolls on its side
+- **Tidally locked moons** — Earth's Moon, all Galilean moons, and Saturn's moons always show the correct face to their parent
+- **Saturn's rings** — Custom geometry with Cassini colour and transparency maps, correctly tilted and non-rotating
+- **Beautiful Sun** — Procedural granulation texture, limb darkening, 4-layer corona, 25-day rotation
+- **Interactive exploration** — One-finger drag to pan, two-finger drag to orbit, pinch to zoom, zoom slider
+- **Planet shortcuts** — Tap planet labels or use the globe menu to fly to any body and see its moon system
+- **Time control** — Real-time through 1,000,000x speed, reverse, Reset to Now
+- **Smart labels** — Separate toggles for planet, moon, and star labels. Auto-deconflicted, occluded behind planets, persisted across launches
+
+## Requirements
+
+- iOS 17.0+
+- iPhone (optimised for iPhone 16 Pro)
+- Xcode 16+
+
+## Setup
+
+1. Clone or copy the project
+2. Open `SolarSystem.xcodeproj` in Xcode
+3. Build and run on simulator or device
+
+No API keys, no external dependencies — pure Apple frameworks.
+
+## How It Works
+
+1. **Current time** is converted to Julian centuries from J2000.0 epoch
+2. **Orbital elements** are computed for each body from JPL data with linear rates
+3. **Kepler's equation** is solved iteratively (Newton-Raphson) to find each body's position
+4. **Positions are scaled** logarithmically so the whole solar system fits on screen
+5. **IAU rotation** is applied — axial tilt and spin angle from real sidereal periods
+6. **SceneKit renders** with PBR materials, NASA textures, and 60fps updates
+7. **8,920 stars** from the Hipparcos catalogue form the background with real positions and colours
+8. **SwiftUI overlays** provide labels, controls, and a zoom slider
+
+## Controls
+
+| Gesture | Action |
+|---------|--------|
+| One-finger drag | Pan / translate the view |
+| Two-finger drag | Orbit / rotate the viewing angle |
+| Pinch | Zoom in and out |
+| Zoom slider | Fine zoom control (right edge) |
+| Tap body or label | Select and fly to that body |
+| Double-tap | Return to full solar system view |
+
+### Toolbar
+
+- **Play/Pause** — Freeze or resume orbital motion
+- **Speed menu** — 0.1x to 1,000,000x, reverse, Reset to Now
+- **Orbit toggle** — Show/hide orbital path lines
+- **Label menu** — Independent toggles for Planets, Moons, Stars
+- **Planet picker** — Jump to any planet, the Sun, or overview
+- **Home** — Return to the full solar system overview
+
+## Launch Arguments
+
+| Argument | Example | Description |
+|----------|---------|-------------|
+| `-timeScale` | `10000` | Speed up orbital motion |
+| `-date` | `2024-01-01` | Override current date |
+| `-focus` | `saturn` | Start focused on a body |
+| `-showOrbits` | | Draw orbital paths |
+| `-hideLabels` | | Hide all labels |
+| `-innerOnly` | | Inner solar system only |
+| `-logPositions` | | Log AU coordinates to console |
+
+## Testing
+
+```bash
+xcodebuild -project SolarSystem.xcodeproj -scheme SolarSystem \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+## Tech Stack
+
+- **SwiftUI** — UI, overlays, gesture state
+- **SceneKit** — GPU-accelerated 3D rendering
+- **Foundation** — Date calculations, UserDefaults
+- **simd** — Vector mathematics
+
+Zero external dependencies.
+
+## Documentation
+
+- [CLAUDE.md](CLAUDE.md) — Developer reference and architecture
+- [architecture.html](https://pcwilliams.design/dev/solarsystem/architecture.html) — Interactive diagrams with SVG illustrations
+- [tutorial.html](https://pcwilliams.design/dev/solarsystem/tutorial.html) — Build narrative and development story
+
+## Credits and Licences
+
+This project uses publicly available texture maps and star catalogue data for non-commercial, educational purposes.
+
+### Textures
+
+| Body | Source | Licence |
+|------|--------|---------|
+| Earth | NASA Blue Marble Next Generation (Dec 2004) | Public domain |
+| Moon | NASA Lunar Reconnaissance Orbiter Camera | Public domain |
+| Mars | USGS Viking MDIM21 mosaic, via Wikimedia | Public domain |
+| Jupiter | NASA/JPL/SSI Cassini cylindrical map [PIA07782](https://photojournal.jpl.nasa.gov/catalog/PIA07782) | Public domain |
+| Pluto | NASA/JHUAPL/SwRI New Horizons colour map | Public domain |
+| Europa | NASA/JPL Voyager/Galileo mosaic, via Wikimedia | Public domain |
+| Mercury | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Venus | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Uranus | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Neptune | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Saturn (body) | [Planet Pixel Emporium](http://planetpixelemporium.com/) by James Hastings-Trew | Free non-commercial |
+| Saturn (rings) | [Planet Pixel Emporium](http://planetpixelemporium.com/) by James Hastings-Trew | Free non-commercial |
+| Io | Assembled by [Steve Albers](http://stevealbers.net/) from NASA/JPL data | Public domain source data |
+| Ganymede | Assembled by [Steve Albers](http://stevealbers.net/) from NASA/JPL data | Public domain source data |
+| Callisto | Assembled by Bjorn Jonsson from NASA/JPL data | Public domain source data |
+
+### Star Data
+
+| Resource | Source | Licence |
+|----------|--------|---------|
+| HYG Star Database v38 | [astronexus/HYG-Database](https://github.com/astronexus/HYG-Database) by David Nash. Compiled from ESA Hipparcos, Yale Bright Star Catalogue, and Gliese Catalogue of Nearby Stars. | CC-BY-SA 2.0 |
+
+### Orbital and Rotation Data
+
+- **Planetary orbital elements** — JPL "Keplerian Elements for Approximate Positions of the Major Planets" (Standish, 1992)
+- **IAU rotation models** — IAU Working Group on Cartographic Coordinates and Rotational Elements
