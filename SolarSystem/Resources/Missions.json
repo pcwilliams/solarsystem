@@ -1,0 +1,2482 @@
+[
+  {
+    "id": "artemis2",
+    "name": "Artemis II",
+    "subtitle": "Crewed lunar flyby",
+    "launchDate": "2026-04-01T22:35:00.000Z",
+    "durationHours": 210,
+    "flybyTimeHours": 112,
+    "referenceFrame": "geocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "SLS lifts off from LC-39B, Kennedy Space Center",
+        "showLabel": false
+      },
+      {
+        "t": 0.036,
+        "name": "SRB Separation",
+        "detail": "Solid rocket boosters jettisoned at 45 km altitude",
+        "showLabel": false
+      },
+      {
+        "t": 0.055,
+        "name": "LAS Jettison",
+        "detail": "Launch abort system tower jettisoned",
+        "showLabel": false
+      },
+      {
+        "t": 0.135,
+        "name": "Core Stage Sep",
+        "detail": "SLS core stage MECO and separation",
+        "showLabel": false
+      },
+      {
+        "t": 0.82,
+        "name": "Perigee Raise",
+        "detail": "ICPS burn raises orbital perigee",
+        "showLabel": false
+      },
+      {
+        "t": 1.8,
+        "name": "Trans-Lunar Injection",
+        "detail": "ICPS burn sends Orion toward the Moon",
+        "showLabel": true
+      },
+      {
+        "t": 112,
+        "name": "Lunar Flyby",
+        "detail": "Closest approach: ~8,900 km above the lunar far side",
+        "showLabel": true
+      },
+      {
+        "t": 210,
+        "name": "Splashdown",
+        "detail": "Pacific Ocean recovery off San Diego",
+        "showLabel": false
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "sls",
+        "name": "SLS",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": false,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.02,
+            "x": 5,
+            "y": 20,
+            "z": 2,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.036,
+            "x": 12,
+            "y": 38,
+            "z": 4,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.055,
+            "x": 25,
+            "y": 60,
+            "z": 6,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.1,
+            "x": 60,
+            "y": 140,
+            "z": 12,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.135,
+            "x": 90,
+            "y": 190,
+            "z": 16,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      },
+      {
+        "id": "srbs",
+        "name": "SRBs",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": false,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0.036,
+            "x": 12,
+            "y": 38,
+            "z": 4,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.05,
+            "x": 8,
+            "y": 52,
+            "z": 8,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.07,
+            "x": -2,
+            "y": 48,
+            "z": 6,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.1,
+            "x": -15,
+            "y": 30,
+            "z": 2,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.13,
+            "x": -20,
+            "y": 10,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      },
+      {
+        "id": "orion",
+        "name": "Orion",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0.135,
+            "x": 90,
+            "y": 190,
+            "z": 5,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.5,
+            "x": 400,
+            "y": 1200,
+            "z": 20,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.82,
+            "x": 800,
+            "y": 2000,
+            "z": 30,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 1.8,
+            "x": 3000,
+            "y": 3500,
+            "z": 80,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 6,
+            "x": 22000,
+            "y": 13000,
+            "z": 200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 12,
+            "x": 55000,
+            "y": 26000,
+            "z": 350,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 24,
+            "x": 110000,
+            "y": 44000,
+            "z": 500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 36,
+            "x": 165000,
+            "y": 53000,
+            "z": 600,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 48,
+            "x": 220000,
+            "y": 55000,
+            "z": 650,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 60,
+            "x": 272000,
+            "y": 50000,
+            "z": 600,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 72,
+            "x": 318000,
+            "y": 40000,
+            "z": 500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 84,
+            "x": 356000,
+            "y": 26000,
+            "z": 400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 96,
+            "x": 380000,
+            "y": 12000,
+            "z": 300,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 104,
+            "x": 390000,
+            "y": 5000,
+            "z": 150,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 108,
+            "x": 396000,
+            "y": -5000,
+            "z": 50,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 112,
+            "x": 398000,
+            "y": -18000,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 116,
+            "x": 393000,
+            "y": -30000,
+            "z": -50,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 122,
+            "x": 405000,
+            "y": -45000,
+            "z": -100,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 132,
+            "x": 370000,
+            "y": -62000,
+            "z": -200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 144,
+            "x": 320000,
+            "y": -78000,
+            "z": -300,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 156,
+            "x": 255000,
+            "y": -85000,
+            "z": -350,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 168,
+            "x": 175000,
+            "y": -80000,
+            "z": -300,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 180,
+            "x": 100000,
+            "y": -65000,
+            "z": -200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 190,
+            "x": 45000,
+            "y": -42000,
+            "z": -100,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 198,
+            "x": 15000,
+            "y": -22000,
+            "z": -40,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 206,
+            "x": 2500,
+            "y": -5000,
+            "z": -10,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 209,
+            "x": 300,
+            "y": -800,
+            "z": 3,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 210,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "apollo8",
+    "name": "Apollo 8",
+    "subtitle": "First lunar orbit",
+    "launchDate": "1968-12-21T12:51:00.000Z",
+    "durationHours": 147,
+    "flybyTimeHours": 69,
+    "referenceFrame": "geocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Saturn V from LC-39A",
+        "showLabel": false
+      },
+      {
+        "t": 2.8,
+        "name": "TLI",
+        "detail": "S-IVB trans-lunar injection",
+        "showLabel": false
+      },
+      {
+        "t": 69,
+        "name": "LOI",
+        "detail": "Lunar orbit insertion — first humans to orbit the Moon",
+        "showLabel": true
+      },
+      {
+        "t": 89,
+        "name": "TEI",
+        "detail": "Trans-Earth injection — heading home",
+        "showLabel": true
+      },
+      {
+        "t": 147,
+        "name": "Splashdown",
+        "detail": "Pacific Ocean recovery",
+        "showLabel": false
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "apollo8_csm",
+        "name": "Apollo 8",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2.8,
+            "x": 2500,
+            "y": 3000,
+            "z": 180,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8,
+            "x": 20000,
+            "y": 14000,
+            "z": 700,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 20,
+            "x": 75000,
+            "y": 36000,
+            "z": 2000,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 36,
+            "x": 160000,
+            "y": 52000,
+            "z": 3200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 52,
+            "x": 260000,
+            "y": 48000,
+            "z": 3800,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 64,
+            "x": 350000,
+            "y": 28000,
+            "z": 4200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 69,
+            "x": 400000,
+            "y": 8000,
+            "z": 4400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 78,
+            "x": 425000,
+            "y": -15000,
+            "z": 4400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 85,
+            "x": 420000,
+            "y": -10000,
+            "z": 4350,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 89,
+            "x": 400000,
+            "y": 5000,
+            "z": 4300,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 102,
+            "x": 300000,
+            "y": 55000,
+            "z": 3500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 118,
+            "x": 175000,
+            "y": 68000,
+            "z": 2200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 132,
+            "x": 70000,
+            "y": 50000,
+            "z": 1000,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 143,
+            "x": 12000,
+            "y": 15000,
+            "z": 200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 147,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "apollo11",
+    "name": "Apollo 11",
+    "subtitle": "First Moon landing",
+    "launchDate": "1969-07-16T13:32:00.000Z",
+    "durationHours": 195,
+    "flybyTimeHours": 76,
+    "referenceFrame": "geocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Saturn V lifts off from LC-39A",
+        "showLabel": false
+      },
+      {
+        "t": 2.83,
+        "name": "TLI",
+        "detail": "S-IVB trans-lunar injection burn",
+        "showLabel": false
+      },
+      {
+        "t": 75.8,
+        "name": "LOI",
+        "detail": "Lunar orbit insertion — SPS retrograde burn",
+        "showLabel": true
+      },
+      {
+        "t": 100.2,
+        "name": "LM Undock",
+        "detail": "Eagle separates from Columbia",
+        "showLabel": true
+      },
+      {
+        "t": 102.75,
+        "name": "Eagle Landing",
+        "detail": "Sea of Tranquility — \"The Eagle has landed\"",
+        "showLabel": true
+      },
+      {
+        "t": 109.4,
+        "name": "First Step",
+        "detail": "\"One small step for man...\"",
+        "showLabel": true
+      },
+      {
+        "t": 124.3,
+        "name": "LM Ascent",
+        "detail": "Eagle ascent stage lifts off from Moon",
+        "showLabel": true
+      },
+      {
+        "t": 135.6,
+        "name": "TEI",
+        "detail": "Trans-Earth injection — heading home",
+        "showLabel": true
+      },
+      {
+        "t": 195.3,
+        "name": "Splashdown",
+        "detail": "Pacific Ocean recovery by USS Hornet",
+        "showLabel": false
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "saturn_v",
+        "name": "Saturn V",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": false,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.05,
+            "x": 60,
+            "y": 150,
+            "z": 10,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      },
+      {
+        "id": "csm_columbia",
+        "name": "Columbia",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": {
+          "startTime": 75.8,
+          "endTime": 135.6,
+          "periodHours": 4,
+          "radiusKm": 25000
+        },
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0.05,
+            "x": 60,
+            "y": 150,
+            "z": 5,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2.83,
+            "x": 3000,
+            "y": 3200,
+            "z": 80,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8,
+            "x": 25000,
+            "y": 15000,
+            "z": 200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 20,
+            "x": 80000,
+            "y": 38000,
+            "z": 400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 36,
+            "x": 160000,
+            "y": 52000,
+            "z": 500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 52,
+            "x": 250000,
+            "y": 50000,
+            "z": 400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 68,
+            "x": 340000,
+            "y": 30000,
+            "z": 300,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 75.8,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": true,
+            "anchorBody": null
+          },
+          {
+            "t": 135.6,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": true,
+            "anchorBody": null
+          },
+          {
+            "t": 140,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": true,
+            "anchorBody": null
+          },
+          {
+            "t": 150,
+            "x": 280000,
+            "y": 50000,
+            "z": -150,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 168,
+            "x": 170000,
+            "y": 62000,
+            "z": -250,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 178,
+            "x": 85000,
+            "y": 48000,
+            "z": -150,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 188,
+            "x": 25000,
+            "y": 20000,
+            "z": -50,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 195,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      },
+      {
+        "id": "lm_eagle",
+        "name": "Eagle",
+        "color": [
+          0.9,
+          0.8,
+          0.4
+        ],
+        "primary": false,
+        "autoTrajectory": null,
+        "moonOrbit": {
+          "startTime": 100.2,
+          "endTime": 102.75,
+          "periodHours": 4,
+          "radiusKm": 25000
+        },
+        "moonLanding": {
+          "startTime": 102.75,
+          "endTime": 124.3
+        },
+        "moonOrbitReturn": {
+          "startTime": 124.3,
+          "endTime": 126.5,
+          "periodHours": 4,
+          "radiusKm": 25000
+        },
+        "waypoints": [
+          {
+            "t": 100.2,
+            "x": 390000,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 126.5,
+            "x": 390000,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "apollo13",
+    "name": "Apollo 13",
+    "subtitle": "Successful failure",
+    "launchDate": "1970-04-11T19:13:00.000Z",
+    "durationHours": 143,
+    "flybyTimeHours": 77,
+    "referenceFrame": "geocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Saturn V lifts off from LC-39A",
+        "showLabel": false
+      },
+      {
+        "t": 2.6,
+        "name": "TLI",
+        "detail": "S-IVB trans-lunar injection burn",
+        "showLabel": false
+      },
+      {
+        "t": 55.9,
+        "name": "O₂ Tank Explosion",
+        "detail": "\"Houston, we've had a problem\" — 320,000 km from Earth",
+        "showLabel": true
+      },
+      {
+        "t": 77,
+        "name": "Lunar Flyby",
+        "detail": "Free-return trajectory — closest approach to Moon",
+        "showLabel": true
+      },
+      {
+        "t": 79.3,
+        "name": "PC+2 Burn",
+        "detail": "LM engine burn to speed up return",
+        "showLabel": true
+      },
+      {
+        "t": 142.9,
+        "name": "Splashdown",
+        "detail": "Pacific Ocean recovery by USS Iwo Jima",
+        "showLabel": false
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "saturn_v_13",
+        "name": "Saturn V",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": false,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 0.05,
+            "x": 60,
+            "y": 150,
+            "z": 10,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      },
+      {
+        "id": "odyssey_aquarius",
+        "name": "Odyssey",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0.05,
+            "x": 60,
+            "y": 150,
+            "z": 10,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2.6,
+            "x": 2800,
+            "y": 3000,
+            "z": 180,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8,
+            "x": 22000,
+            "y": 14000,
+            "z": 700,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 20,
+            "x": 75000,
+            "y": 36000,
+            "z": 2000,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 36,
+            "x": 155000,
+            "y": 50000,
+            "z": 3000,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 48,
+            "x": 220000,
+            "y": 52000,
+            "z": 3500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 55.9,
+            "x": 280000,
+            "y": 42000,
+            "z": 3800,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 64,
+            "x": 340000,
+            "y": 28000,
+            "z": 4100,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 72,
+            "x": 378000,
+            "y": 12000,
+            "z": 4400,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 77,
+            "x": 420000,
+            "y": -8000,
+            "z": 4500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 79.3,
+            "x": 425000,
+            "y": -20000,
+            "z": 4450,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 84,
+            "x": 400000,
+            "y": -45000,
+            "z": 4200,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 96,
+            "x": 320000,
+            "y": -85000,
+            "z": 3500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 110,
+            "x": 210000,
+            "y": -95000,
+            "z": 2500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 122,
+            "x": 110000,
+            "y": -78000,
+            "z": 1500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 134,
+            "x": 35000,
+            "y": -40000,
+            "z": 500,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 141,
+            "x": 5000,
+            "y": -8000,
+            "z": 50,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 143,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cassini",
+    "name": "Cassini-Huygens",
+    "subtitle": "Saturn orbiter",
+    "launchDate": "1997-10-15T08:43:00.000Z",
+    "durationHours": 59064,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Titan IV-B/Centaur from Cape Canaveral",
+        "showLabel": false
+      },
+      {
+        "t": 4608,
+        "name": "Venus Flyby 1",
+        "detail": "First Venus gravity assist — 284 km altitude",
+        "showLabel": true
+      },
+      {
+        "t": 12888,
+        "name": "Venus Flyby 2",
+        "detail": "Second Venus gravity assist — 623 km",
+        "showLabel": true
+      },
+      {
+        "t": 15528,
+        "name": "Earth Flyby",
+        "detail": "Earth gravity assist — 1,171 km altitude",
+        "showLabel": true
+      },
+      {
+        "t": 25560,
+        "name": "Jupiter Flyby",
+        "detail": "Jupiter gravity assist — 9.7M km",
+        "showLabel": true
+      },
+      {
+        "t": 59064,
+        "name": "Saturn Arrival",
+        "detail": "Saturn orbit insertion — SOI burn",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "cassini",
+        "name": "Cassini",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 1440,
+            "x": 0.52,
+            "y": 0.62,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2880,
+            "x": -0.1,
+            "y": 0.78,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 4608,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "venus"
+          },
+          {
+            "t": 6000,
+            "x": -0.85,
+            "y": 0.15,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 7500,
+            "x": -0.75,
+            "y": -0.45,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 9000,
+            "x": -0.2,
+            "y": -0.8,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 10500,
+            "x": 0.4,
+            "y": -0.65,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 11500,
+            "x": 0.55,
+            "y": -0.35,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 12888,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "venus"
+          },
+          {
+            "t": 14208,
+            "x": 0.65,
+            "y": -0.02,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 15528,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 18000,
+            "x": 1.5,
+            "y": -1.2,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 21000,
+            "x": 2.5,
+            "y": -2.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 24000,
+            "x": 3.8,
+            "y": -3.5,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 25560,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "jupiter"
+          },
+          {
+            "t": 30000,
+            "x": 5,
+            "y": -1.5,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 36000,
+            "x": 6.2,
+            "y": 1,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 42000,
+            "x": 7.5,
+            "y": 3.5,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 48000,
+            "x": 8.2,
+            "y": 4.8,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 53000,
+            "x": 8.6,
+            "y": 5.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 59064,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "saturn"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "voyager1",
+    "name": "Voyager 1",
+    "subtitle": "Grand tour",
+    "launchDate": "1977-09-05T12:56:00.000Z",
+    "durationHours": 28200,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Titan IIIE/Centaur from Cape Canaveral",
+        "showLabel": false
+      },
+      {
+        "t": 13104,
+        "name": "Jupiter Flyby",
+        "detail": "Closest approach 348,890 km from Jupiter centre",
+        "showLabel": true
+      },
+      {
+        "t": 27720,
+        "name": "Saturn Flyby",
+        "detail": "Closest approach 184,300 km from Saturn centre",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "voyager1",
+        "name": "Voyager 1",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 2000,
+            "x": 1.15,
+            "y": -0.75,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 4000,
+            "x": 1.8,
+            "y": -1.45,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 6000,
+            "x": 2.4,
+            "y": -2.1,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8000,
+            "x": 3,
+            "y": -2.65,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 10000,
+            "x": 3.55,
+            "y": -3.15,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 12000,
+            "x": 4.1,
+            "y": -3.55,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 13104,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "jupiter"
+          },
+          {
+            "t": 14500,
+            "x": 5,
+            "y": -3.1,
+            "z": 0.05,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 17000,
+            "x": 5.5,
+            "y": -2.2,
+            "z": 0.1,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 20000,
+            "x": 6.1,
+            "y": -1.1,
+            "z": 0.15,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 23000,
+            "x": 6.8,
+            "y": 0.2,
+            "z": 0.2,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 26000,
+            "x": 7.5,
+            "y": 1.6,
+            "z": 0.25,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 28200,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "saturn"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "voyager2",
+    "name": "Voyager 2",
+    "subtitle": "Grand Tour",
+    "launchDate": "1977-08-20T14:29:00.000Z",
+    "durationHours": 105000,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Titan IIIE/Centaur from Cape Canaveral",
+        "showLabel": false
+      },
+      {
+        "t": 16800,
+        "name": "Jupiter Flyby",
+        "detail": "Closest approach Jul 9, 1979",
+        "showLabel": true
+      },
+      {
+        "t": 35400,
+        "name": "Saturn Flyby",
+        "detail": "Closest approach Aug 26, 1981",
+        "showLabel": true
+      },
+      {
+        "t": 74000,
+        "name": "Uranus Flyby",
+        "detail": "Closest approach Jan 24, 1986 — first visit",
+        "showLabel": true
+      },
+      {
+        "t": 105000,
+        "name": "Neptune Flyby",
+        "detail": "Closest approach Aug 25, 1989 — first visit",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "voyager2",
+        "name": "Voyager 2",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 2500,
+            "x": 1.3,
+            "y": -1.1,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 5000,
+            "x": 1.9,
+            "y": -2,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8000,
+            "x": 2.4,
+            "y": -2.9,
+            "z": 0.01,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 11000,
+            "x": 2.85,
+            "y": -3.7,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 14000,
+            "x": 3.25,
+            "y": -4.4,
+            "z": 0.03,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 16800,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "jupiter"
+          },
+          {
+            "t": 19000,
+            "x": 4,
+            "y": -5.4,
+            "z": 0.04,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 23000,
+            "x": 5,
+            "y": -6.2,
+            "z": 0.07,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 27000,
+            "x": 6.1,
+            "y": -6.8,
+            "z": 0.1,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 31000,
+            "x": 7.2,
+            "y": -7.2,
+            "z": 0.14,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 35400,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "saturn"
+          },
+          {
+            "t": 39000,
+            "x": 9,
+            "y": -7,
+            "z": -0.2,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 46000,
+            "x": 10.8,
+            "y": -6,
+            "z": -0.8,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 54000,
+            "x": 12.8,
+            "y": -4.8,
+            "z": -1.8,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 62000,
+            "x": 14.8,
+            "y": -3.3,
+            "z": -3,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 70000,
+            "x": 16.5,
+            "y": -1.8,
+            "z": -4.2,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 74000,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "uranus"
+          },
+          {
+            "t": 78000,
+            "x": 18.5,
+            "y": -0.2,
+            "z": -5.5,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 86000,
+            "x": 20.5,
+            "y": 2,
+            "z": -7,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 94000,
+            "x": 23,
+            "y": 4.5,
+            "z": -8.5,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 101000,
+            "x": 25.5,
+            "y": 7,
+            "z": -10,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 105000,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "neptune"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "perseverance",
+    "name": "Perseverance",
+    "subtitle": "Mars rover",
+    "launchDate": "2020-07-30T11:50:00.000Z",
+    "durationHours": 4920,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Atlas V from Cape Canaveral",
+        "showLabel": false
+      },
+      {
+        "t": 4920,
+        "name": "Mars Landing",
+        "detail": "Jezero Crater — \"Percy\" and Ingenuity",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "perseverance",
+        "name": "Perseverance",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": "transfer",
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 4920,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "mars"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "newhorizons",
+    "name": "New Horizons",
+    "subtitle": "Pluto flyby",
+    "launchDate": "2006-01-19T19:00:00.000Z",
+    "durationHours": 83000,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Atlas V from Cape Canaveral — fastest launch ever",
+        "showLabel": false
+      },
+      {
+        "t": 9720,
+        "name": "Jupiter Flyby",
+        "detail": "Gravity assist — closest approach 2.3M km",
+        "showLabel": true
+      },
+      {
+        "t": 83000,
+        "name": "Pluto Flyby",
+        "detail": "Closest approach 12,500 km — Jul 14, 2015",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "newhorizons",
+        "name": "New Horizons",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 1500,
+            "x": -1.2,
+            "y": 1.6,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 3000,
+            "x": -2,
+            "y": 2.4,
+            "z": 0.01,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 5000,
+            "x": -2.9,
+            "y": 3.4,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 7000,
+            "x": -3.6,
+            "y": 4.2,
+            "z": 0.03,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8500,
+            "x": -4.2,
+            "y": 4.8,
+            "z": 0.04,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 9720,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "jupiter"
+          },
+          {
+            "t": 11000,
+            "x": -5.2,
+            "y": 6,
+            "z": 0.06,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 15000,
+            "x": -6.5,
+            "y": 7.5,
+            "z": 0.1,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 22000,
+            "x": -9,
+            "y": 10.5,
+            "z": 0.18,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 30000,
+            "x": -11.5,
+            "y": 13.5,
+            "z": 0.25,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 40000,
+            "x": -14.5,
+            "y": 17,
+            "z": 0.35,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 50000,
+            "x": -17.5,
+            "y": 20.5,
+            "z": 0.45,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 60000,
+            "x": -20.5,
+            "y": 23.5,
+            "z": 0.55,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 72000,
+            "x": -24,
+            "y": 27,
+            "z": 0.65,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 78000,
+            "x": -26,
+            "y": 29,
+            "z": 0.7,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 83000,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "pluto"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "parker",
+    "name": "Parker Solar Probe",
+    "subtitle": "Closest to Sun",
+    "launchDate": "2018-08-12T07:31:00.000Z",
+    "durationHours": 58000,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Delta IV Heavy from Cape Canaveral",
+        "showLabel": false
+      },
+      {
+        "t": 1250,
+        "name": "Venus Flyby 1",
+        "detail": "First Venus gravity assist",
+        "showLabel": true
+      },
+      {
+        "t": 2100,
+        "name": "Perihelion 1",
+        "detail": "First solar approach — 0.17 AU",
+        "showLabel": true
+      },
+      {
+        "t": 55000,
+        "name": "Perihelion 22",
+        "detail": "Record closest approach — 0.046 AU from Sun",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "parker",
+        "name": "Parker",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 600,
+            "x": 0.6,
+            "y": -0.55,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 1250,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "venus"
+          },
+          {
+            "t": 1700,
+            "x": 0.25,
+            "y": -0.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2100,
+            "x": 0.1,
+            "y": -0.14,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 2800,
+            "x": 0.4,
+            "y": 0.2,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 4000,
+            "x": 0.65,
+            "y": 0.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 5500,
+            "x": 0.35,
+            "y": 0.45,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 6500,
+            "x": 0.05,
+            "y": 0.15,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 8000,
+            "x": 0.5,
+            "y": -0.35,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 12000,
+            "x": -0.1,
+            "y": -0.13,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 18000,
+            "x": 0.45,
+            "y": 0.4,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 22000,
+            "x": -0.08,
+            "y": 0.1,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 30000,
+            "x": 0.35,
+            "y": -0.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 35000,
+            "x": 0.06,
+            "y": -0.08,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 42000,
+            "x": -0.3,
+            "y": 0.35,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 48000,
+            "x": -0.04,
+            "y": 0.04,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 52000,
+            "x": 0.25,
+            "y": -0.25,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 55000,
+            "x": 0.03,
+            "y": -0.03,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 58000,
+            "x": -0.2,
+            "y": 0.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bepicolombo",
+    "name": "BepiColombo",
+    "subtitle": "Mercury orbiter",
+    "launchDate": "2018-10-20T01:45:00.000Z",
+    "durationHours": 70800,
+    "flybyTimeHours": null,
+    "referenceFrame": "heliocentric",
+    "autoTrajectory": null,
+    "events": [
+      {
+        "t": 0,
+        "name": "Launch",
+        "detail": "Ariane 5 from Kourou, French Guiana",
+        "showLabel": false
+      },
+      {
+        "t": 12240,
+        "name": "Earth Flyby",
+        "detail": "Earth gravity assist",
+        "showLabel": true
+      },
+      {
+        "t": 16800,
+        "name": "Venus Flyby 1",
+        "detail": "First Venus gravity assist — 10,720 km",
+        "showLabel": true
+      },
+      {
+        "t": 24000,
+        "name": "Venus Flyby 2",
+        "detail": "Second Venus gravity assist — 552 km",
+        "showLabel": true
+      },
+      {
+        "t": 26040,
+        "name": "Mercury Flyby 1",
+        "detail": "First Mercury flyby — 200 km",
+        "showLabel": true
+      },
+      {
+        "t": 44000,
+        "name": "Mercury Flyby 6",
+        "detail": "Sixth and final Mercury flyby",
+        "showLabel": true
+      },
+      {
+        "t": 70800,
+        "name": "Mercury Orbit",
+        "detail": "Mercury orbit insertion",
+        "showLabel": true
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "bepicolombo",
+        "name": "BepiColombo",
+        "color": [
+          1,
+          0.6,
+          0.3
+        ],
+        "primary": true,
+        "autoTrajectory": null,
+        "moonOrbit": null,
+        "moonLanding": null,
+        "moonOrbitReturn": null,
+        "waypoints": [
+          {
+            "t": 0,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 2400,
+            "x": 0.3,
+            "y": 0.85,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 4800,
+            "x": -0.5,
+            "y": 0.8,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 7200,
+            "x": -0.9,
+            "y": 0.1,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 9600,
+            "x": -0.45,
+            "y": -0.6,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 12240,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "earth"
+          },
+          {
+            "t": 14400,
+            "x": 0.65,
+            "y": -0.3,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 16800,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "venus"
+          },
+          {
+            "t": 20400,
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 24000,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "venus"
+          },
+          {
+            "t": 25200,
+            "x": 0.35,
+            "y": -0.15,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 26040,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "anchorMoon": false,
+            "anchorBody": "mercury"
+          },
+          {
+            "t": 30000,
+            "x": -0.3,
+            "y": -0.25,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 34000,
+            "x": 0.32,
+            "y": 0.2,
+            "z": 0.03,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 38000,
+            "x": -0.25,
+            "y": 0.3,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 42000,
+            "x": 0.2,
+            "y": -0.32,
+            "z": 0.03,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 44000,
+            "x": -0.28,
+            "y": -0.28,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 50000,
+            "x": 0.15,
+            "y": 0.35,
+            "z": 0.02,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 56000,
+            "x": -0.2,
+            "y": 0.33,
+            "z": 0.03,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 62000,
+            "x": 0.3,
+            "y": -0.18,
+            "z": 0.05,
+            "anchorMoon": false,
+            "anchorBody": null
+          },
+          {
+            "t": 70800,
+            "x": 0.35,
+            "y": 0.15,
+            "z": 0.06,
+            "anchorMoon": false,
+            "anchorBody": null
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -50,6 +50,21 @@ struct ContentView: View {
                 Spacer()
 
                 if showControls {
+                    // Mission telemetry is pinned bottom-left, above the timeline
+                    // slider. The event banner lives as a separate top-centre
+                    // overlay so it doesn't occlude the vehicle marker / Moon
+                    // when mission highlights fire.
+                    MissionTelemetryPanel(viewModel: viewModel)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 6)
+
+                    if viewModel.activeMissionId != nil {
+                        MissionTimelineSlider(viewModel: viewModel)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 4)
+                    }
+
                     // Horizontal zoom slider across the bottom
                     zoomSlider
                         .padding(.horizontal, 16)
@@ -57,6 +72,19 @@ struct ContentView: View {
 
                     controlsBar
                 }
+            }
+
+            // Event banner overlay — top-centre of the screen, below the date
+            // bar. Kept out of the main VStack so it floats over the scene
+            // without pushing telemetry / timeline / controls around when it
+            // appears and disappears.
+            VStack(spacing: 0) {
+                // Reserve space for the info panel so the banner doesn't
+                // overlap the date / body info at the very top.
+                Color.clear.frame(height: 88)
+                MissionEventBannerView(viewModel: viewModel)
+                    .padding(.horizontal, 16)
+                Spacer()
             }
         }
         .onAppear {
@@ -66,7 +94,11 @@ struct ContentView: View {
             viewModel.stopAnimation()
         }
         .preferredColorScheme(.dark)
+        #if os(iOS)
+        // Keep the system status bar visible on iOS (the date bar sits below it).
+        // macOS has no equivalent — the modifier is unavailable.
         .statusBarHidden(false)
+        #endif
         .sheet(isPresented: $showCredits) {
             CreditsView()
         }
@@ -138,6 +170,21 @@ struct ContentView: View {
                 Image(systemName: (viewModel.showPlanetLabels || viewModel.showMoonLabels || viewModel.showStarLabels) ? "tag.fill" : "tag")
                     .foregroundColor((viewModel.showPlanetLabels || viewModel.showMoonLabels || viewModel.showStarLabels) ? .orange : .gray)
             }
+
+            // Satellites menu (ISS toggle — extensible if we add more satellites later)
+            Menu {
+                Button {
+                    viewModel.showISS.toggle()
+                } label: {
+                    Label("ISS", systemImage: viewModel.showISS ? "checkmark.circle.fill" : "circle")
+                }
+            } label: {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .foregroundColor(viewModel.showISS ? .orange : .gray)
+            }
+
+            // Missions dropdown (rocket icon → list of 11 missions + Stop replay)
+            MissionsMenu(viewModel: viewModel)
 
             // Quick-jump to any planet
             Menu {
@@ -240,7 +287,11 @@ struct ContentView: View {
                     .onTapGesture {
                         viewModel.focusOnBody(named: label.name)
                     }
-                    .position(x: label.screenPoint.x, y: label.screenPoint.y - 16)
+                    // `screenPoint` is already offset above the body by the
+                    // on-screen radius + a small margin (see
+                    // `SolarSystemViewModel.projectLabel`), so no extra fixed
+                    // vertical offset is needed here.
+                    .position(x: label.screenPoint.x, y: label.screenPoint.y)
             }
         }
         .ignoresSafeArea()

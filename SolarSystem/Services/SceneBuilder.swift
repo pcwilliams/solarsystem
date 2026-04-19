@@ -34,11 +34,11 @@ final class SceneBuilder {
 
     /// Logarithmic distance scale: maps AU to scene units.
     /// Mercury ~7.5, Earth ~16.5, Jupiter ~36.5, Neptune ~63.
-    static let distanceScaleBase: Double = 0.5
-    static let distanceScaleFactor: Double = 15.0
+    nonisolated static let distanceScaleBase: Double = 0.5
+    nonisolated static let distanceScaleFactor: Double = 15.0
 
     /// Convert real AU distance to scene units using logarithmic compression.
-    static func sceneDistance(au: Double) -> Double {
+    nonisolated static func sceneDistance(au: Double) -> Double {
         return log(1.0 + au / distanceScaleBase) * distanceScaleFactor
     }
 
@@ -52,10 +52,29 @@ final class SceneBuilder {
     ///
     /// Approximate scene sizes (moons, real ratio to parent):
     ///   Moon ~ 0.027 (0.27x Earth), Ganymede ~ 0.012 (0.038x Jupiter)
-    static let planetScaleBase: Double = 0.00125
-    static let minimumBodyRadius: Float = 0.012
+    nonisolated static let planetScaleBase: Double = 0.00125
+    nonisolated static let minimumBodyRadius: Float = 0.012
 
-    static func sceneRadius(km: Double, type: BodyType) -> Float {
+    /// Centralised moon-distance compression: moonSceneDist = parentSceneRadius * pow(realRatio, exponent) * scale.
+    /// Also reused by mission trajectory rendering so trajectory lines stay proportional to the moons they pass.
+    /// See CLAUDE.md "Sqrt radius scaling" and MISSIONS.md "Distance Compression".
+    nonisolated static let moonDistExponent: Double = 0.6
+    nonisolated static let moonDistScale: Double = 1.5
+
+    /// Compressed scene-space distance of a moon from its parent planet centre.
+    /// Using `pow(realRatio, 0.6) * 1.5`:
+    ///   Moon:     60.3 -> 11.7 -> 17.6x parentRadius  (real 60.3x)
+    ///   Io:        6.0 ->  2.9 ->  4.3x parentRadius
+    ///   Callisto: 26.9 ->  7.4 -> 11.1x parentRadius
+    nonisolated static func moonSceneDistance(parentSceneRadius: Double,
+                                               moonSemiMajorKm: Double,
+                                               parentRadiusKm: Double) -> Double {
+        guard parentRadiusKm > 0 else { return 0 }
+        let realRatio = moonSemiMajorKm / parentRadiusKm
+        return parentSceneRadius * pow(realRatio, moonDistExponent) * moonDistScale
+    }
+
+    nonisolated static func sceneRadius(km: Double, type: BodyType) -> Float {
         switch type {
         case .star:
             return 0.8
@@ -73,7 +92,7 @@ final class SceneBuilder {
     /// Build the root scene with starfield background, lighting, and camera.
     func buildScene() -> SCNScene {
         let scene = SCNScene()
-        scene.background.contents = UIColor.black
+        scene.background.contents = PlatformColor.black
 
         addStarfield(to: scene)
         addLighting(to: scene)
@@ -86,6 +105,12 @@ final class SceneBuilder {
 
     /// Create a SceneKit sphere node for a celestial body with appropriate material and decorations.
     func createBodyNode(for body: CelestialBody) -> SCNNode {
+        // ISS gets a procedural 3D model rather than a sphere — recognisable at
+        // every zoom with zero bundled assets.
+        if body.id == "iss" {
+            return buildISSNode()
+        }
+
         let radius = SceneBuilder.sceneRadius(km: body.physical.radiusKm, type: body.type)
         let sphere = SCNSphere(radius: CGFloat(max(radius, 0.02)))
         sphere.segmentCount = body.type == .star ? 48 : 36
@@ -119,11 +144,72 @@ final class SceneBuilder {
         return node
     }
 
+    // MARK: - ISS procedural model
+
+    /// Simplified procedural ISS: central truss, cross-bar modules, four pairs
+    /// of solar panels, two white radiators. Matches the shape in the companion
+    /// web app so the silhouette is consistent across ports.
+    private func buildISSNode() -> SCNNode {
+        let node = SCNNode()
+        node.name = "iss"
+
+        // Overall scale (scene units) — tuned to be visible at Earth-close zoom.
+        let s: Float = 0.012
+
+        let grey = PlatformColor(white: 0.85, alpha: 1.0)
+        let panelColor = PlatformColor(red: 0.1, green: 0.23, blue: 0.42, alpha: 1.0)
+
+        func constantMaterial(color: PlatformColor, doubleSided: Bool = false) -> SCNMaterial {
+            let m = SCNMaterial()
+            m.diffuse.contents = color
+            m.lightingModel = .constant
+            m.isDoubleSided = doubleSided
+            return m
+        }
+
+        // Central truss: long horizontal bar (x-axis).
+        let truss = SCNBox(width: CGFloat(s * 2.4),
+                            height: CGFloat(s * 0.06),
+                            length: CGFloat(s * 0.06),
+                            chamferRadius: 0)
+        truss.firstMaterial = constantMaterial(color: grey)
+        node.addChildNode(SCNNode(geometry: truss))
+
+        // Pressurised modules: shorter cross-bar (z-axis).
+        let modules = SCNBox(width: CGFloat(s * 0.06),
+                              height: CGFloat(s * 0.06),
+                              length: CGFloat(s * 0.8),
+                              chamferRadius: 0)
+        modules.firstMaterial = constantMaterial(color: grey)
+        node.addChildNode(SCNNode(geometry: modules))
+
+        // Four pairs of solar panels along the truss, laid flat in the orbital plane.
+        let panelGeom = SCNPlane(width: CGFloat(s * 0.35), height: CGFloat(s * 0.9))
+        panelGeom.firstMaterial = constantMaterial(color: panelColor, doubleSided: true)
+        for xOff in [Float(-0.9), -0.35, 0.35, 0.9] {
+            let panel = SCNNode(geometry: panelGeom)
+            panel.position = SCNVector3(s * xOff, 0, 0)
+            panel.eulerAngles.x = .pi / 2   // lay flat in orbital plane
+            node.addChildNode(panel)
+        }
+
+        // Two white radiators on the top side, perpendicular to the panels.
+        let radGeom = SCNPlane(width: CGFloat(s * 0.15), height: CGFloat(s * 0.4))
+        radGeom.firstMaterial = constantMaterial(color: .white, doubleSided: true)
+        for xOff in [Float(-0.6), 0.6] {
+            let rad = SCNNode(geometry: radGeom)
+            rad.position = SCNVector3(s * xOff, s * 0.15, 0)
+            node.addChildNode(rad)
+        }
+
+        return node
+    }
+
     // MARK: - Planet Materials
 
     /// Configure PBR material properties per planet for realistic appearance.
     private func configurePlanetMaterial(_ material: SCNMaterial, for body: CelestialBody) {
-        let color = UIColor(
+        let color = PlatformColor(
             red: CGFloat(body.physical.color.x),
             green: CGFloat(body.physical.color.y),
             blue: CGFloat(body.physical.color.z),
@@ -161,27 +247,27 @@ final class SceneBuilder {
         // Layer 1: Inner hot white-yellow corona
         addGlowLayer(to: node, name: "sun_glow_inner",
                      radius: radius * 1.3,
-                     color: UIColor(red: 1.0, green: 0.95, blue: 0.7, alpha: 0.4))
+                     color: PlatformColor(red: 1.0, green: 0.95, blue: 0.7, alpha: 0.4))
 
         // Layer 2: Mid orange glow
         addGlowLayer(to: node, name: "sun_glow_mid",
                      radius: radius * 1.8,
-                     color: UIColor(red: 1.0, green: 0.8, blue: 0.3, alpha: 0.2))
+                     color: PlatformColor(red: 1.0, green: 0.8, blue: 0.3, alpha: 0.2))
 
         // Layer 3: Outer faint corona
         addGlowLayer(to: node, name: "sun_glow_outer",
                      radius: radius * 2.8,
-                     color: UIColor(red: 1.0, green: 0.7, blue: 0.2, alpha: 0.08))
+                     color: PlatformColor(red: 1.0, green: 0.7, blue: 0.2, alpha: 0.08))
 
         // Layer 4: Very faint extended corona
         addGlowLayer(to: node, name: "sun_glow_corona",
                      radius: radius * 4.0,
-                     color: UIColor(red: 1.0, green: 0.6, blue: 0.15, alpha: 0.03))
+                     color: PlatformColor(red: 1.0, green: 0.6, blue: 0.15, alpha: 0.03))
 
     }
 
     /// Add a single additive-blended glow sphere with a radial gradient texture.
-    private func addGlowLayer(to node: SCNNode, name: String, radius: CGFloat, color: UIColor) {
+    private func addGlowLayer(to node: SCNNode, name: String, radius: CGFloat, color: PlatformColor) {
         let sphere = SCNSphere(radius: radius)
         sphere.segmentCount = 36
         let material = SCNMaterial()
@@ -261,12 +347,12 @@ final class SceneBuilder {
         let ringMaterial = SCNMaterial()
         // Planet Pixel Emporium ring textures: separate colour and alpha maps
         if let colorPath = Bundle.main.path(forResource: "saturn_ring_color", ofType: "jpg") {
-            ringMaterial.diffuse.contents = UIImage(contentsOfFile: colorPath)
+            ringMaterial.diffuse.contents = PlatformImage(contentsOfFile: colorPath)
         } else {
-            ringMaterial.diffuse.contents = UIColor(red: 0.85, green: 0.78, blue: 0.6, alpha: 1.0)
+            ringMaterial.diffuse.contents = PlatformColor(red: 0.85, green: 0.78, blue: 0.6, alpha: 1.0)
         }
         if let alphaPath = Bundle.main.path(forResource: "saturn_ring_alpha", ofType: "gif") {
-            ringMaterial.transparent.contents = UIImage(contentsOfFile: alphaPath)
+            ringMaterial.transparent.contents = PlatformImage(contentsOfFile: alphaPath)
         }
         ringMaterial.lightingModel = .constant
         ringMaterial.isDoubleSided = true
@@ -316,7 +402,7 @@ final class SceneBuilder {
 
         let geometry = SCNGeometry(sources: [vertexSource], elements: [element])
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor(white: 0.45, alpha: 0.8)
+        material.diffuse.contents = PlatformColor(white: 0.45, alpha: 0.8)
         material.lightingModel = .constant
         geometry.firstMaterial = material
 
@@ -438,7 +524,7 @@ final class SceneBuilder {
         // One constant-lighting material per tier (vertex colour provides the actual hue)
         for _ in elements {
             let material = SCNMaterial()
-            material.diffuse.contents = UIColor.white
+            material.diffuse.contents = PlatformColor.white
             material.lightingModel = .constant
             geometry.materials.append(material)
         }
@@ -498,7 +584,7 @@ final class SceneBuilder {
         // Point light at the Sun (origin) illuminating all planets
         let sunLight = SCNLight()
         sunLight.type = .omni
-        sunLight.color = UIColor(red: 1.0, green: 0.97, blue: 0.9, alpha: 1.0)
+        sunLight.color = PlatformColor(red: 1.0, green: 0.97, blue: 0.9, alpha: 1.0)
         sunLight.intensity = 2000
         sunLight.attenuationStartDistance = 0
         sunLight.attenuationEndDistance = 500
@@ -512,7 +598,7 @@ final class SceneBuilder {
         // Dim ambient light so the dark sides of planets aren't pure black
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.color = UIColor(white: 0.15, alpha: 1.0)
+        ambient.color = PlatformColor(white: 0.15, alpha: 1.0)
         ambient.intensity = 500
 
         let ambientNode = SCNNode()
@@ -556,23 +642,20 @@ final class SceneBuilder {
         node.position = SCNVector3(Float(scaled.x), Float(scaled.z), Float(-scaled.y))
     }
 
-    /// Position a moon relative to its parent planet. Uses the real orbital-radius-to-planet-radius
-    /// ratio, compressed by pow(0.4) so close moons (Phobos at 2.8 radii) stay close and
-    /// distant moons (Callisto at 26 radii) remain proportionally farther.
+    /// Position a moon relative to its parent planet. Uses the centralised
+    /// `moonSceneDistance` helper so moons and mission trajectories share the same
+    /// compression formula (`pow(realRatio, moonDistExponent) * moonDistScale`).
     func updateMoonNodePosition(_ moonNode: SCNNode, moonOffset: SIMD3<Double>,
                                  parentPosition: SIMD3<Double>,
                                  parentRadiusKm: Double,
                                  moonSemiMajorKm: Double) {
         let moonDist = simd_length(moonOffset)
         let parentSceneRadius = Double(SceneBuilder.sceneRadius(km: parentRadiusKm, type: .planet))
-
-        // Compress the real orbital ratio so moons are visible but proportionally spaced:
-        //   Moon:     384400/6371  = 60.3 -> pow(0.4) -> 5.9  -> x1.5 -> 8.8x parentRadius
-        //   Io:       421700/69911 = 6.0  -> pow(0.4) -> 2.1  -> x1.5 -> 3.1x parentRadius
-        //   Callisto: 1882709/69911= 26.9 -> pow(0.4) -> 3.8  -> x1.5 -> 5.7x parentRadius
-        let realRatio = moonSemiMajorKm / parentRadiusKm
-        let compressedRatio = pow(realRatio, 0.4) * 1.5
-        let moonSceneDist = moonDist > 0 ? parentSceneRadius * compressedRatio : 0
+        let moonSceneDist = moonDist > 0
+            ? SceneBuilder.moonSceneDistance(parentSceneRadius: parentSceneRadius,
+                                              moonSemiMajorKm: moonSemiMajorKm,
+                                              parentRadiusKm: parentRadiusKm)
+            : 0
 
         let direction: SIMD3<Double>
         if moonDist > 0 {

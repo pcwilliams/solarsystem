@@ -20,6 +20,13 @@
 		5B000000000000000000002A /* InfoPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000B /* InfoPanelView.swift */; };
 		5B000000000000000000002B /* SCNVector3+Math.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000C /* SCNVector3+Math.swift */; };
 		5B00000000000000000000B0 /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000B1 /* CreditsView.swift */; };
+		5B00000000000000000000B2 /* Mission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C2 /* Mission.swift */; };
+		5B00000000000000000000B3 /* MissionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C3 /* MissionData.swift */; };
+		5B00000000000000000000B4 /* MissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C4 /* MissionManager.swift */; };
+		5B00000000000000000000B5 /* CatmullRom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C5 /* CatmullRom.swift */; };
+		5B00000000000000000000B6 /* Missions.json in Resources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C6 /* Missions.json */; };
+		5B00000000000000000000B7 /* MissionUIViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000C9 /* MissionUIViews.swift */; };
+		5B00000000000000000000B8 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B00000000000000000000CA /* Platform.swift */; };
 		5B000000000000000000002C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B000000000000000000000D /* Assets.xcassets */; };
 		5B0000000000000000000060 /* earth_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000070 /* earth_2k.jpg */; };
 		5B0000000000000000000061 /* moon_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000071 /* moon_2k.jpg */; };
@@ -64,6 +71,13 @@
 		5B000000000000000000000B /* InfoPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoPanelView.swift; sourceTree = "<group>"; };
 		5B000000000000000000000C /* SCNVector3+Math.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SCNVector3+Math.swift"; sourceTree = "<group>"; };
 		5B00000000000000000000B1 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
+		5B00000000000000000000C2 /* Mission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mission.swift; sourceTree = "<group>"; };
+		5B00000000000000000000C3 /* MissionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionData.swift; sourceTree = "<group>"; };
+		5B00000000000000000000C4 /* MissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionManager.swift; sourceTree = "<group>"; };
+		5B00000000000000000000C5 /* CatmullRom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatmullRom.swift; sourceTree = "<group>"; };
+		5B00000000000000000000C6 /* Missions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Missions.json; sourceTree = "<group>"; };
+		5B00000000000000000000C9 /* MissionUIViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionUIViews.swift; sourceTree = "<group>"; };
+		5B00000000000000000000CA /* Platform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		5B000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5B000000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5B000000000000000000000F /* SolarSystem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SolarSystem.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +146,7 @@
 				5B0000000000000000000036 /* ViewModels */,
 				5B0000000000000000000037 /* Extensions */,
 				5B000000000000000000003A /* Textures */,
+				5B00000000000000000000C8 /* Resources */,
 				5B000000000000000000000D /* Assets.xcassets */,
 				5B000000000000000000000E /* Info.plist */,
 			);
@@ -153,6 +168,8 @@
 				5B0000000000000000000003 /* CelestialBody.swift */,
 				5B0000000000000000000004 /* OrbitalElements.swift */,
 				5B0000000000000000000005 /* SolarSystemData.swift */,
+				5B00000000000000000000C2 /* Mission.swift */,
+				5B00000000000000000000C3 /* MissionData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -163,6 +180,7 @@
 				5B000000000000000000000A /* SolarSystemSceneView.swift */,
 				5B000000000000000000000B /* InfoPanelView.swift */,
 				5B00000000000000000000B1 /* CreditsView.swift */,
+				5B00000000000000000000C9 /* MissionUIViews.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -173,6 +191,8 @@
 				5B0000000000000000000006 /* OrbitalMechanics.swift */,
 				5B0000000000000000000007 /* SceneBuilder.swift */,
 				5B0000000000000000000008 /* TextureGenerator.swift */,
+				5B00000000000000000000C4 /* MissionManager.swift */,
+				5B00000000000000000000C5 /* CatmullRom.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -189,8 +209,17 @@
 			isa = PBXGroup;
 			children = (
 				5B000000000000000000000C /* SCNVector3+Math.swift */,
+				5B00000000000000000000CA /* Platform.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		5B00000000000000000000C8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5B00000000000000000000C6 /* Missions.json */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		5B000000000000000000003A /* Textures */ = {
@@ -328,6 +357,7 @@
 				5B0000000000000000000087 /* ganymede_2k.jpg in Resources */,
 				5B0000000000000000000088 /* callisto_2k.jpg in Resources */,
 				5B0000000000000000000089 /* stars.csv in Resources */,
+				5B00000000000000000000B6 /* Missions.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,6 +388,12 @@
 				5B000000000000000000002A /* InfoPanelView.swift in Sources */,
 				5B000000000000000000002B /* SCNVector3+Math.swift in Sources */,
 				5B00000000000000000000B0 /* CreditsView.swift in Sources */,
+				5B00000000000000000000B2 /* Mission.swift in Sources */,
+				5B00000000000000000000B3 /* MissionData.swift in Sources */,
+				5B00000000000000000000B4 /* MissionManager.swift in Sources */,
+				5B00000000000000000000B5 /* CatmullRom.swift in Sources */,
+				5B00000000000000000000B7 /* MissionUIViews.swift in Sources */,
+				5B00000000000000000000B8 /* Platform.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -435,7 +471,9 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -490,7 +528,9 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -519,8 +559,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystem;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -550,8 +590,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystem;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -570,8 +610,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystemTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -591,8 +631,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.pwilliams.SolarSystemTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;

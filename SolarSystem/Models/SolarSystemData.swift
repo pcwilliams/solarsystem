@@ -63,7 +63,7 @@ enum SolarSystemData {
             color: SCNVector3(0.2, 0.5, 0.9)
         ),
         rotation: RotationProperties(periodHours: 23.9345, obliquity: 23.44, w0: 190.147),
-        moons: [earthMoon]
+        moons: [earthMoon, iss]
     )
 
     static let mars = CelestialBody(
@@ -187,6 +187,27 @@ enum SolarSystemData {
             color: SCNVector3(0.7, 0.7, 0.7)
         ),
         rotation: RotationProperties(periodHours: 27.321661 * 24, obliquity: 6.687, w0: 38.321, tidallyLocked: true)
+    )
+
+    /// International Space Station: 408 km altitude, 51.6° inclination, 92.7-minute
+    /// orbit. Modeled as an Earth-orbiting moon-like body with a procedural 3D model
+    /// built by `SceneBuilder.buildISSModel`. Off by default — toggled via the
+    /// Satellites menu. `radiusKm` is a placeholder (geometry comes from the model).
+    static let iss = CelestialBody(
+        name: "ISS",
+        type: .moon,
+        moonElements: MoonOrbitalElements(
+            semiMajorAxisKm: 6779,
+            period: 0.06436,
+            eccentricity: 0.0001,
+            inclination: 51.6,
+            longitudeAtEpoch: 120.0
+        ),
+        physical: PhysicalProperties(
+            radiusKm: 0.001,
+            color: SCNVector3(1.0, 0.95, 0.8)
+        ),
+        rotation: RotationProperties(periodHours: 0.06436 * 24, obliquity: 0, tidallyLocked: true)
     )
 
     // MARK: - Mars's Moons

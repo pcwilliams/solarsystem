@@ -146,7 +146,7 @@
 </head>
 <body>
     <h1>SolarSystem</h1>
-    <p class="subtitle">Architecture &mdash; Real orbital mechanics meets GPU-accelerated rendering</p>
+    <p class="subtitle">Architecture &mdash; real orbital mechanics, GPU-accelerated rendering, and the techniques behind each part</p>
 
     <div style="text-align: center; margin: 32px 0 40px;">
         <div style="display: inline-block; background: #000; border-radius: 40px; padding: 14px; box-shadow: 0 16px 64px rgba(0,0,0,0.6);">
@@ -172,11 +172,16 @@
                 H --> I["Custom Camera<br/>Coordinator"]
                 I --> G
 
+                A --> MM["MissionManager<br/>(trajectories, telemetry, events)"]
+                C --> MM
+                MM --> F
+
                 J["JPL J2000.0<br/>Elements"] --> C
                 K["NASA/Cassini<br/>Textures"] --> F
                 L["Time Controls<br/>(Speed/Pause/Reset)"] --> A
                 M["HYG Star<br/>Catalogue (8,920)"] --> F
                 N["UserDefaults"] --> H
+                MD["Mission Data<br/>(waypoints, events, vehicles)"] --> MM
 
                 style A fill:#1a1a3e,stroke:#ffaa33
                 style C fill:#1a2a1a,stroke:#44aa44
@@ -185,6 +190,8 @@
                 style H fill:#2a1a2a,stroke:#aa44ff
                 style I fill:#1a2a2a,stroke:#44aaaa
                 style M fill:#1a1a3e,stroke:#88bbff
+                style MM fill:#2a1a2a,stroke:#aa44ff
+                style MD fill:#1a1a3e,stroke:#88bbff
         </div>
     </div>
 
@@ -284,6 +291,137 @@
         </div>
     </div>
 
+    <!-- Coordinate Systems & Axis Flip -->
+    <div class="deep-dive">
+        <h2>Coordinate Systems &amp; Axis Flip</h2>
+
+        <p>
+            Orbital mechanics and SceneKit use different conventions for which axis points &ldquo;up&rdquo;. Every position computed by the physics engine has to be remapped once before it reaches the scene graph. The swap is a constant, so it's cheap &mdash; but getting it wrong puts the planets underneath each other or flips the direction of rotation.
+        </p>
+
+        <div class="math">
+            <span class="heading">Ecliptic (orbital mechanics) frame</span>
+            <span class="var">x</span>, <span class="var">y</span> &mdash; in the ecliptic plane (Earth's orbital plane around the Sun)<br>
+            <span class="var">z</span> &mdash; perpendicular to the ecliptic, pointing north (right-handed)<br>
+            <br>
+            <span class="heading">SceneKit (GPU rendering) frame</span>
+            <span class="var">x</span> &mdash; right on screen<br>
+            <span class="var">y</span> &mdash; up on screen  <span class="comment">// SceneKit is Y-up, left-handed</span><br>
+            <span class="var">z</span> &mdash; toward the camera<br>
+            <br>
+            <span class="heading">The mapping (all three places in the codebase)</span>
+            <span class="var">scene.x</span> <span class="op">=</span> <span class="var">ecliptic.x</span><br>
+            <span class="var">scene.y</span> <span class="op">=</span> <span class="var">ecliptic.z</span>    <span class="comment">// ecliptic up becomes SceneKit up</span><br>
+            <span class="var">scene.z</span> <span class="op">=</span> <span class="op">&minus;</span><span class="var">ecliptic.y</span>   <span class="comment">// negate for right&rarr;left handed flip</span>
+        </div>
+
+        <p>
+            <strong>Why negate y?</strong> Without the sign flip, orbits would run the wrong way round &mdash; planets would appear to orbit clockwise when viewed from the north ecliptic pole, which is the opposite of reality. The single sign flip converts right-handed ecliptic coordinates to SceneKit's left-handed frame.
+        </p>
+
+        <p>
+            This same mapping is applied to <em>every</em> position: planet centres, moon offsets, mission waypoints, trajectory samples, event label positions. Centralising it in <code>SceneBuilder.updateNodePosition</code> and <code>MissionManager.toLocalGeocentricScene</code> means we only have to get it right once.
+        </p>
+    </div>
+
+    <!-- Platform Abstraction -->
+    <div class="deep-dive">
+        <h2>Cross-Platform Abstraction (iOS + macOS)</h2>
+
+        <p>
+            The same source tree builds a native iOS app and a native macOS app. One Xcode target, two destinations, no Catalyst. The strategy is: make every file platform-neutral by default, and funnel the handful of genuine divergences through a single abstraction file plus a few narrowly-scoped <code>#if</code> blocks.
+        </p>
+
+        <h3>The Typealias Layer (<code>Extensions/Platform.swift</code>)</h3>
+        <p>
+            Four typealiases resolve differently per platform. Every other file in the project references these names instead of writing <code>UIColor</code> / <code>NSColor</code> directly:
+        </p>
+
+        <div class="math">
+            <span class="heading">Platform.swift</span>
+            <span class="op">#</span>if <span class="fn">canImport</span>(<span class="var">UIKit</span>)<br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformColor</span>             <span class="op">=</span> <span class="var">UIColor</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformImage</span>             <span class="op">=</span> <span class="var">UIImage</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformView</span>              <span class="op">=</span> <span class="var">UIView</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformViewRepresentable</span> <span class="op">=</span> <span class="var">UIViewRepresentable</span><br>
+            <span class="op">#</span>elseif <span class="fn">canImport</span>(<span class="var">AppKit</span>)<br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformColor</span>             <span class="op">=</span> <span class="var">NSColor</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformImage</span>             <span class="op">=</span> <span class="var">NSImage</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformView</span>              <span class="op">=</span> <span class="var">NSView</span><br>
+            &nbsp;&nbsp;<span class="var">public typealias</span> <span class="var">PlatformViewRepresentable</span> <span class="op">=</span> <span class="var">NSViewRepresentable</span><br>
+            <span class="op">#</span>endif
+        </div>
+
+        <p>
+            The rule is: outside this file, no direct reference to UIKit or AppKit types. Anything that would have been <code>UIColor(red:…)</code> is now <code>PlatformColor(red:…)</code>, the result compiling as <code>UIColor(red:…)</code> on iOS and <code>NSColor(red:…)</code> on macOS.
+        </p>
+
+        <h3>Narrowly-Scoped <code>#if</code> Divergences</h3>
+        <p>
+            Four places need more than a typealias swap, because the API shape itself differs between platforms:
+        </p>
+
+        <ol>
+            <li>
+                <strong>SceneView representable protocol</strong> (<code>SolarSystemSceneView.swift</code>). <code>UIViewRepresentable</code> needs <code>makeUIView</code> / <code>updateUIView</code>; <code>NSViewRepresentable</code> wants <code>makeNSView</code> / <code>updateNSView</code>. Both methods exist behind <code>#if canImport(UIKit)</code> in the struct, delegating to a shared <code>configureSharedSceneView(_:context:)</code> helper that does the 90% of setup that's identical.
+            </li>
+            <li>
+                <strong>Gesture recognisers</strong>. UIKit and AppKit each define their own class hierarchy (UIPanGestureRecognizer vs NSPanGestureRecognizer). Both apps install five recognisers on the SCNView, but the sets differ by platform input idiom &mdash; see the Gesture Map below. The gesture <em>handlers</em> call shared <code>applyPan</code>, <code>applyOrbit</code>, <code>applyPinchZoom</code> methods so the camera maths is only written once.
+            </li>
+            <li>
+                <strong>Frame-tick loop</strong> (<code>SolarSystemViewModel.swift</code>). Both platforms use <code>CADisplayLink</code>, just constructed differently: iOS takes the direct <code>CADisplayLink(target:selector:)</code> initialiser, macOS acquires the link from the SCNView via <code>scnView.displayLink(target:selector:)</code> (macOS 14+) so ticks stay synced to whichever display the window is on. An earlier <code>Timer</code>-based macOS path produced a visible ~1&nbsp;Hz stutter because Timer cadence drifts in and out of phase with the 60&nbsp;Hz VBlank &mdash; switched to the NSView-bound display link as soon as that was diagnosed.
+            </li>
+            <li>
+                <strong>Platform-only SwiftUI modifiers</strong> (<code>ContentView.swift</code>, <code>CreditsView.swift</code>). <code>.statusBarHidden</code> is iOS-only (macOS has no equivalent concept); <code>navigationBarTitleDisplayMode</code> and <code>.topBarTrailing</code> are iOS-only (macOS uses <code>.confirmationAction</code>); <code>systemGroupedBackground</code> is iOS-only (macOS has <code>windowBackgroundColor</code>). Guarded one-liner each.
+            </li>
+        </ol>
+
+        <h3>SCNVector3 Component Type (the sneaky one)</h3>
+        <p>
+            The most subtle platform difference: <code>SCNVector3.x</code> is <code>Float</code> on iOS but <code>CGFloat</code> on macOS. Arithmetic like <code>target.x -= right.x * dx * speed</code> works on iOS (all Float) but fails on macOS (CGFloat can't subtract a Float without an explicit cast). Two helpers in <code>SCNVector3+Math.swift</code> hide the gap:
+        </p>
+
+        <div class="math">
+            <span class="heading">Cross-platform SCNVector3 helpers</span>
+            <span class="var">extension</span> <span class="var">SCNVector3</span> {<br>
+            &nbsp;&nbsp;<span class="comment">// Construct from Double; widens or narrows per platform.</span><br>
+            &nbsp;&nbsp;<span class="var">init</span>(_ x: <span class="var">Double</span>, _ y: <span class="var">Double</span>, _ z: <span class="var">Double</span>)<br>
+            &nbsp;&nbsp;<span class="comment">// Offset by Double deltas without Float/CGFloat mismatches.</span><br>
+            &nbsp;&nbsp;<span class="fn">func</span> <span class="fn">adding</span>(_ dx: <span class="var">Double</span>, _ dy: <span class="var">Double</span>, _ dz: <span class="var">Double</span>) <span class="op">-&gt;</span> <span class="var">SCNVector3</span><br>
+            }
+        </div>
+
+        <p>
+            All the orbital maths already works in <code>Double</code> (SIMD3&lt;Double&gt;) for precision, so the <code>Double</code>-typed helpers drop in naturally. Call sites like <code>target.adding(dx, dy, dz)</code> or <code>SCNVector3(x, y, z)</code> compile unchanged on both platforms.
+        </p>
+
+        <h3>Gesture Map</h3>
+
+        <div style="overflow-x: auto; margin: 1rem 0;">
+        <table style="border-collapse: collapse; width: 100%; font-size: 0.9rem;">
+            <tr style="background: #1a1a2e;">
+                <th style="text-align: left; padding: 0.6rem; border-bottom: 1px solid #333;">Action</th>
+                <th style="text-align: left; padding: 0.6rem; border-bottom: 1px solid #333;">iOS input</th>
+                <th style="text-align: left; padding: 0.6rem; border-bottom: 1px solid #333;">macOS input</th>
+            </tr>
+            <tr><td style="padding: 0.4rem 0.6rem;">Pan (translate)</td><td style="padding: 0.4rem 0.6rem;">1-finger drag</td><td style="padding: 0.4rem 0.6rem;">Left-mouse drag</td></tr>
+            <tr><td style="padding: 0.4rem 0.6rem;">Orbit</td><td style="padding: 0.4rem 0.6rem;">2-finger drag</td><td style="padding: 0.4rem 0.6rem;">Right-mouse drag</td></tr>
+            <tr><td style="padding: 0.4rem 0.6rem;">Zoom</td><td style="padding: 0.4rem 0.6rem;">Pinch</td><td style="padding: 0.4rem 0.6rem;">Scroll wheel / trackpad pinch</td></tr>
+            <tr><td style="padding: 0.4rem 0.6rem;">Select body</td><td style="padding: 0.4rem 0.6rem;">Single tap</td><td style="padding: 0.4rem 0.6rem;">Single click</td></tr>
+            <tr><td style="padding: 0.4rem 0.6rem;">Reset</td><td style="padding: 0.4rem 0.6rem;">Double tap</td><td style="padding: 0.4rem 0.6rem;">Double click</td></tr>
+        </table>
+        </div>
+
+        <p>
+            AppKit's Y axis is inverted relative to UIKit's (origin bottom-left vs top-left), so the macOS pan / orbit handlers flip <code>dy</code> before feeding it into the shared maths &mdash; this preserves the "drag up = look up" convention both platforms expect. Scroll-wheel zoom needs a custom <code>NSView</code> subclass (<code>ScrollZoomSCNView</code>) because <code>NSGestureRecognizer</code> doesn't cover scroll events, so we override <code>scrollWheel(with:)</code> directly.
+        </p>
+
+        <h3>Integration Tests via Launch Arguments</h3>
+        <p>
+            The launch-argument path (<code>-focus</code>, <code>-mission</code>, <code>-showISS</code>, <code>-timeScale</code>, <code>-date</code>, etc.) is platform-neutral &mdash; it reads <code>ProcessInfo.processInfo.arguments</code>, which exists identically on both. On iOS you invoke with <code>xcrun simctl launch booted com.pwilliams.SolarSystem -- -mission apollo11</code>; on macOS you use <code>open -n SolarSystem.app --args -mission apollo11</code>. Same arg syntax, same behaviour, same mission playback.
+        </p>
+    </div>
+
     <!-- Rendering Pipeline -->
     <div class="diagram-section">
         <h2>Scene Graph</h2>
@@ -296,6 +434,10 @@
                 A --> F["Moon Nodes &times;16<br/>(Tidally Locked)"]
                 A --> G["Orbit Paths &times;9"]
                 A --> H2["Lights<br/>(Omni + Ambient)"]
+                A --> I["ISS Node<br/>(procedural truss + panels,<br/>Earth orbit, off by default)"]
+                A --> M["Mission Groups<br/>(per mission, positioned at<br/>Earth or origin each frame)"]
+                M --> M1["Trajectory line<br/>(polyline, vertex gradient)"]
+                M --> M2["Vehicle markers<br/>(SCNSphere + halo)"]
 
                 D --> D1["Emissive Sphere<br/>(Procedural Granulation)"]
                 D --> D2["4 Glow Layers<br/>(Radial Gradient, Additive)"]
@@ -312,7 +454,561 @@
                 style E fill:#1a1a3e,stroke:#4488ff
                 style F fill:#1a1a3e,stroke:#888888
                 style C fill:#1a1a3e,stroke:#88bbff
+                style I fill:#1a2a3a,stroke:#88bbff
+                style M fill:#2a1a2a,stroke:#aa44ff
         </div>
+    </div>
+
+    <!-- Performance Debugging -->
+    <div class="deep-dive">
+        <h2>Performance Debugging (lessons from a macOS stutter)</h2>
+
+        <p>
+            The app ran buttery-smooth on iOS but stuttered once a second on macOS at high time-scales. The hunt for the cause illustrates a reusable pattern: <strong>add cheap instrumentation behind a launch flag, look at the numbers, let the numbers point at the culprit</strong>. It's much faster than guessing.
+        </p>
+
+        <h3>Step 1 &mdash; Measure the frame loop</h3>
+        <p>
+            Add a per-frame logger behind a <code>-frameLog</code> launch arg. Two things worth printing: the delta-t between ticks (is the <em>display link</em> stuttering?) and the work-time inside the handler (is <em>our code</em> slow?). Anomaly threshold: 20 ms (dropped frame at 60 Hz). Plus a once-per-second summary so the healthy baseline is visible alongside the anomalies.
+        </p>
+
+        <div class="math">
+            <span class="heading">What the first run showed</span>
+            <span class="comment">// Healthy baseline between stutters:</span><br>
+            <span class="var">[frame] summary  fps~60  worst-dt=16.8ms  worst-work=3.3ms</span><br>
+            <br>
+            <span class="comment">// Stutters:</span><br>
+            <span class="var">[frame] STUTTER  dt=58.4ms  pos=196.9ms  ui=yes</span><br>
+            <span class="var">[frame] STUTTER  dt=256.7ms  pos=0.1ms</span>
+        </div>
+
+        <p>
+            Two patterns: spikes where <em>work</em> balloons (<code>pos=196ms</code>) and spikes where the <em>tick</em> gap is huge with no work (<code>dt=256ms</code>). The second shape is usually external (OS scheduler pause); the first is something we own.
+        </p>
+
+        <h3>Step 2 &mdash; Split the work phase</h3>
+        <p>
+            <code>updatePositions</code> has five big blocks. Instrument each with a <code>CACurrentMediaTime()</code> stopwatch and print a sub-phase breakdown when a stutter fires. Output:
+        </p>
+
+        <div class="math">
+            <span class="var">STUTTER  pos=265.7ms  (bodies=264.7  stars=0.6  decon=0.3  mm=0.0  mui=0.0)</span>
+        </div>
+
+        <p>
+            The <code>bodies</code> phase &mdash; the loop that updates planet positions and projects their labels &mdash; is consuming the entire budget. The other four phases are sub-millisecond. Drill deeper.
+        </p>
+
+        <h3>Step 3 &mdash; Per-call timing</h3>
+        <p>
+            Wrap each <code>projectLabel</code> call with a stopwatch and log anything over 5 ms:
+        </p>
+
+        <div class="math">
+            <span class="var">[frame]  slow projectLabel Earth (16.6ms)</span><br>
+            <span class="var">[frame]  slow projectLabel ISS (16.5ms)</span><br>
+            <span class="var">[frame]  slow projectLabel Earth (17.0ms)</span><br>
+            <span class="var">[frame]  slow projectLabel ISS (33.3ms)</span>
+        </div>
+
+        <p>
+            <strong>16.5 ms is exactly one 60 Hz display frame.</strong> Each <code>SCNView.projectPoint</code> call is blocking the main thread waiting for a render-thread sync &mdash; <em>every single call</em>. Twenty-six bodies × 16.5 ms = 400 ms of stalls per frame. That's the stutter.
+        </p>
+
+        <h3>Step 4 &mdash; The fix: bypass the render thread</h3>
+        <p>
+            <code>projectPoint</code> internally flushes pending SceneKit transform updates to make sure its answer is up-to-date. On iOS that flush is cheap; on macOS under heavy scene activity it waits for a full VBlank. Since we're projecting our own scene whose transforms we just set ourselves, we <em>know</em> they're up to date &mdash; we can compute the projection directly and skip the flush:
+        </p>
+
+        <div class="math">
+            <span class="heading">Cache view × projection once per frame</span>
+            <span class="var">viewMatrix</span>      <span class="op">=</span> <span class="fn">simd_inverse</span>(<span class="var">cameraNode.simdWorldTransform</span>)<br>
+            <span class="var">projection</span>      <span class="op">=</span> <span class="fn">toSimd4x4</span>(<span class="var">camera.projectionTransform</span>)<br>
+            <span class="var">cachedViewProj</span>  <span class="op">=</span> <span class="var">projection</span> <span class="op">*</span> <span class="var">viewMatrix</span><br>
+            <br>
+            <span class="heading">Per-label projection (pure SIMD arithmetic)</span>
+            <span class="var">clip</span>   <span class="op">=</span> <span class="var">cachedViewProj</span> <span class="op">*</span> <span class="fn">simd_float4</span>(worldPos, <span class="num">1</span>)<br>
+            <span class="comment">// behind camera when clip.w &le; 0</span><br>
+            <span class="var">ndcX</span>   <span class="op">=</span> <span class="var">clip.x</span> <span class="op">/</span> <span class="var">clip.w</span>    <span class="comment">// normalised device coord [-1, 1]</span><br>
+            <span class="var">ndcY</span>   <span class="op">=</span> <span class="var">clip.y</span> <span class="op">/</span> <span class="var">clip.w</span><br>
+            <span class="var">screenX</span> <span class="op">=</span> (<span class="var">ndcX</span> <span class="op">+</span> <span class="num">1</span>) <span class="op">*</span> <span class="num">0.5</span> <span class="op">*</span> <span class="var">viewWidth</span><br>
+            <span class="var">screenY</span> <span class="op">=</span> (<span class="num">1</span> <span class="op">&minus;</span> <span class="var">ndcY</span>) <span class="op">*</span> <span class="num">0.5</span> <span class="op">*</span> <span class="var">viewHeight</span>   <span class="comment">// SwiftUI top-left Y, both platforms</span>
+        </div>
+
+        <p>
+            Per-label cost: <strong>~100 ns</strong>. All 26 bodies projected in under a millisecond &mdash; effectively free. And the output is already in SwiftUI's top-left-origin coordinate system on both platforms, which also fixes the label-tracking inversion bug that was originally separate. Two bugs, one fix.
+        </p>
+
+        <h3>The measurement result</h3>
+        <div class="math">
+            <span class="heading">Before</span>
+            <span class="var">summary  fps~46  worst-dt=272.6ms  worst-work=265.7ms</span><br>
+            <br>
+            <span class="heading">After</span>
+            <span class="var">summary  fps~60  worst-dt=17.6ms  worst-work=2.0ms</span>
+        </div>
+
+        <p>
+            The <code>-frameLog</code> flag stays in the codebase &mdash; if anything similar ever creeps back, one command-line flag gives an instant diagnosis.
+        </p>
+
+        <h3>Follow-up 1: construct the projection matrix ourselves</h3>
+        <p>
+            Once labels were fast, they turned out to be <em>horizontally drifting</em> on macOS &mdash; the Moon label would land tens of pixels to the left or right of the Moon, further from the centre of the view. Vertical tracking was fine. A single-axis error points straight at the aspect-ratio term in the projection matrix.
+        </p>
+        <p>
+            Root cause: <code>camera.projectionTransform</code> on macOS returns a matrix whose <code>[0][0]</code> doesn't track the current viewport aspect. Fix: build the matrix ourselves from <code>camera.fieldOfView</code> and <code>view.bounds</code> each frame. The conventional perspective matrix, with the convention difference between horizontal-FOV cameras (macOS default) and vertical-FOV cameras (iOS default):
+        </p>
+
+        <div class="math">
+            <span class="heading">Perspective matrix construction</span>
+            <span class="var">f</span> <span class="op">=</span> <span class="num">1</span> <span class="op">/</span> <span class="fn">tan</span>(<span class="var">fov</span> <span class="op">/</span> <span class="num">2</span>)<br>
+            <span class="var">aspect</span> <span class="op">=</span> <span class="var">width</span> <span class="op">/</span> <span class="var">height</span><br>
+            <br>
+            <span class="comment">// horizontal FOV (macOS default):</span><br>
+            <span class="var">xScale</span> <span class="op">=</span> <span class="var">f</span>,  <span class="var">yScale</span> <span class="op">=</span> <span class="var">f</span> <span class="op">*</span> <span class="var">aspect</span><br>
+            <br>
+            <span class="comment">// vertical FOV (iOS default):</span><br>
+            <span class="var">xScale</span> <span class="op">=</span> <span class="var">f</span> <span class="op">/</span> <span class="var">aspect</span>,  <span class="var">yScale</span> <span class="op">=</span> <span class="var">f</span>
+        </div>
+
+        <p>
+            One gotcha along the way: <code>SCNCameraProjectionDirection</code> only has <code>.horizontal</code> and <code>.vertical</code> cases &mdash; there is no <code>.automatic</code> despite the docs/convention suggesting one. Just switch on the two cases directly.
+        </p>
+
+        <h3>Follow-up 2: offset labels by actual on-screen radius</h3>
+        <p>
+            Second issue: labels were landing centred on each planet rather than above it, because the fixed <code>16 pt</code> vertical offset in the SwiftUI overlay was dwarfed by Jupiter / the Sun at close zoom. Fix: offset each label upward by the body's <em>real</em> on-screen radius + a small margin, computed from the same cached projection matrix.
+        </p>
+
+        <div class="math">
+            <span class="heading">On-screen radius of a sphere at depth <code>clip.w</code></span>
+            <span class="var">pixelsPerUnit</span> <span class="op">=</span> <span class="var">yScale</span> <span class="op">*</span> (<span class="var">height</span> <span class="op">/</span> <span class="num">2</span>)  <span class="comment">// cached once per frame</span><br>
+            <span class="var">screenR</span>       <span class="op">=</span> <span class="var">worldRadius</span> <span class="op">*</span> <span class="var">pixelsPerUnit</span> <span class="op">/</span> <span class="var">clip.w</span><br>
+            <br>
+            <span class="heading">Label offset above the body</span>
+            <span class="var">offsetY</span>       <span class="op">=</span> <span class="fn">max</span>(<span class="num">8</span>, <span class="var">screenR</span> <span class="op">+</span> <span class="num">4</span>)
+        </div>
+
+        <p>
+            The <code>pixelsPerUnit</code> factor comes directly from the projection matrix &mdash; it's the same quantity SceneKit uses internally to render the sphere as a circle of that radius. The <code>8 pt</code> floor handles nodes with no <code>SCNSphere</code> geometry (stars, the ISS procedural model) so they still get a readable gap.
+        </p>
+
+        <p>
+            An earlier attempt used an empirical <code>r / clip.w * 300</code> formula borrowed from the star-occlusion code. That constant was tuned for iOS portrait viewports and under-shoots widescreen Mac windows by 3&ndash;4&times;, so label offsets were too small and still landed on the disc. Lesson: don't fudge projection maths with empirical constants &mdash; derive them from the matrix.
+        </p>
+
+        <h3>Reusable lessons</h3>
+        <ul>
+            <li><strong>Cheap instrumentation pays off quickly</strong>. Adding the frame logger was 30 lines; it located the bug in two iterations.</li>
+            <li><strong>Print healthy baselines, not just anomalies</strong>. The once-per-second <code>summary</code> line made it obvious that normal frames were 3 ms &mdash; so a 265 ms frame was 80× off, not 2× off.</li>
+            <li><strong>Exactly-one-display-frame timings are a signature</strong>. When you see durations matching 16.7 ms / 33.3 ms / 50.0 ms (at 60 Hz), you're usually looking at render-thread sync, not actual CPU work.</li>
+            <li><strong>Bypass frameworks you can reproduce cheaply</strong>. <code>SCNView.projectPoint</code> is convenient but opaque. A 10-line SIMD matrix-multiply does the same job, is provably synchronous, and happens to also be ~100× faster.</li>
+            <li><strong>Single-axis bugs usually mean one matrix term is wrong</strong>. Horizontal labels drifted, vertical didn't &mdash; that's a signature for a broken <code>[0][0]</code> aspect term. Don't try to rule out the matrix; inspect it.</li>
+            <li><strong>Derive visual constants from the projection matrix, not eyeballing</strong>. The old <code>r / w * 300</code> label-offset felt plausible on iOS, but was wrong on widescreen. <code>yScale * height / 2</code> comes from the actual projection and works everywhere.</li>
+        </ul>
+    </div>
+
+    <!-- Graphics Rendering Techniques -->
+    <div class="deep-dive">
+        <h2>Graphics Rendering Techniques</h2>
+
+        <p>
+            Everything on screen comes from SceneKit primitives combined in specific ways. This section catalogues the techniques so you can reuse them.
+        </p>
+
+        <h3>Physically-Based Rendering (planet surfaces)</h3>
+        <p>
+            Every planet and moon uses <code>SCNMaterial</code> with <code>lightingModel = .physicallyBased</code>. The key properties are:
+        </p>
+        <div class="math">
+            <span class="heading">PBR material for planets</span>
+            <span class="var">material.diffuse.contents</span>   <span class="op">=</span> <span class="var">nasaTextureImage</span>       <span class="comment">// equirectangular map</span><br>
+            <span class="var">material.lightingModel</span>     <span class="op">=</span> <span class="num">.physicallyBased</span><br>
+            <span class="var">material.roughness.contents</span> <span class="op">=</span> <span class="num">0.85</span>  <span class="comment">// terrestrial bodies are rough (low specular)</span><br>
+            <span class="var">material.metalness.contents</span> <span class="op">=</span> <span class="num">0.0</span>   <span class="comment">// no planets are metallic</span>
+        </div>
+        <p>
+            Roughness near 1.0 gives a matt, powder-like appearance (the Moon, Mars, Mercury). Gas giants use slightly lower roughness (~0.7) for a subtle sheen from the cloud tops. A single point light at the Sun's scene position (plus low ambient to stop the night side going fully black) drives the PBR response.
+        </p>
+
+        <h3>Constant Lighting (Sun, stars, orbit lines, trajectory lines)</h3>
+        <p>
+            Anything that shouldn't respond to scene lighting uses <code>lightingModel = .constant</code>. This tells SceneKit to display the diffuse colour directly, unaffected by angle or light position. Used for:
+        </p>
+        <ul>
+            <li><strong>The Sun</strong>, which is the light source itself &mdash; shading it would be wrong.</li>
+            <li><strong>Orbit paths</strong>, which are thin reference lines, not real 3D geometry.</li>
+            <li><strong>Stars</strong>, because they're effectively at infinity and have no diffuse response.</li>
+            <li><strong>Trajectory lines and vehicle markers</strong>, where the vertex colour carries all the intended information.</li>
+        </ul>
+
+        <h3>Additive Blending (Sun corona, vehicle halos)</h3>
+        <p>
+            Bright glows are built with nested translucent billboards and <code>blendMode = .add</code>. Additive blending sums each layer's RGB into the framebuffer rather than alpha-blending, so overlapping glow layers build up brightness without ever darkening. Combined with <code>writesToDepthBuffer = false</code> (so the glow doesn't occlude what's behind it), this gives the soft corona look around the Sun and the mission vehicle markers.
+        </p>
+        <div class="math">
+            <span class="heading">Sun corona (4 nested spheres)</span>
+            <span class="comment">// Layer radii: 1.3&times;, 1.8&times;, 2.8&times;, 4.0&times; the Sun's own radius</span><br>
+            <span class="var">glowMaterial.diffuse.contents</span>     <span class="op">=</span> <span class="var">radialGradientTexture</span>  <span class="comment">// bright centre &rarr; transparent edge</span><br>
+            <span class="var">glowMaterial.lightingModel</span>         <span class="op">=</span> <span class="num">.constant</span><br>
+            <span class="var">glowMaterial.blendMode</span>             <span class="op">=</span> <span class="num">.add</span><br>
+            <span class="var">glowMaterial.writesToDepthBuffer</span>   <span class="op">=</span> <span class="num">false</span>  <span class="comment">// stacked glows don't fight each other</span>
+        </div>
+
+        <h3>Vertex Colours on Line Geometry (trajectory gradient)</h3>
+        <p>
+            The trajectory line is one connected polyline with a colour that varies along its length &mdash; bright white at launch, saturates into orange during coast, brightens at the flyby, dims on the return leg. We can't do this with a single uniform colour, so we use a per-vertex colour attribute via <code>SCNGeometrySource(semantic: .color, ...)</code>.
+        </p>
+        <p>
+            SceneKit's <code>.line</code> primitive takes <em>pairs</em> of indices rather than a line-strip array, so a polyline with N samples needs 2(N&minus;1) indices in the form <code>[0,1, 1,2, 2,3, ...]</code>. The vertex colour is linearly interpolated along each segment, giving a smooth gradient end-to-end for free.
+        </p>
+        <div class="math">
+            <span class="heading">Line geometry with a per-vertex gradient</span>
+            <span class="var">vertexSource</span> <span class="op">=</span> <span class="fn">SCNGeometrySource</span>(vertices: <span class="var">scenePoints</span>)<br>
+            <span class="var">colorSource</span>  <span class="op">=</span> <span class="fn">SCNGeometrySource</span>(data: <span class="var">colorData</span>, semantic: <span class="num">.color</span>, ...)<br>
+            <span class="var">indices</span>      <span class="op">=</span> <span class="op">[</span><span class="num">0,1</span>, <span class="num">1,2</span>, <span class="num">2,3</span>, ... <span class="op">]</span>  <span class="comment">// pairs, not a strip</span><br>
+            <span class="var">element</span>      <span class="op">=</span> <span class="fn">SCNGeometryElement</span>(data: <span class="var">indexData</span>, primitiveType: <span class="num">.line</span>, ...)<br>
+            <span class="var">material.lightingModel</span> <span class="op">=</span> <span class="num">.constant</span>  <span class="comment">// so the vertex colours pass through</span>
+        </div>
+
+        <h3>Depth Ordering &amp; Render Order</h3>
+        <p>
+            SceneKit draws opaque objects front-to-back (depth-tested) and then transparent objects back-to-front. Markers and halos need to override the default ordering to stay visible on top of the planets:
+        </p>
+        <ul>
+            <li><code>writesToDepthBuffer = false</code> on glows/markers stops them occluding each other.</li>
+            <li><code>readsFromDepthBuffer = false</code> on the vehicle marker core stops it disappearing when it flies behind a planet during a flyby.</li>
+            <li><code>node.renderingOrder</code> biases the draw order when depth won't do the right thing &mdash; e.g. the trajectory line (<code>renderingOrder = 100</code>) draws after planets (default 0) so it sits on top.</li>
+        </ul>
+
+        <h3>Billboards via Radially Symmetric Spheres</h3>
+        <p>
+            Three.js has <code>Sprite</code> for always-face-the-camera billboards; SceneKit has <code>SCNBillboardConstraint</code>. We avoid both for vehicle markers because a <em>radially symmetric</em> SCNSphere with constant lighting <em>is</em> a billboard &mdash; it looks identical from every viewing angle. Fewer moving parts, no constraint overhead, and the scale-by-camera-distance trick (max(0.04, camDist &times; 0.012)) keeps them visible at any zoom.
+        </p>
+
+        <h3>Procedural 2D Icons (SwiftUI Canvas + Path)</h3>
+        <p>
+            SF&nbsp;Symbols covers most of the toolbar (gauge, tag, circle, globe, house, antenna) but has no rocket glyph. Bundling a custom asset would break the "pure Apple frameworks" rule we follow elsewhere, so the missions dropdown uses <code>RocketIcon</code> &mdash; a tiny SwiftUI view that draws the shape with a <code>Canvas</code> and three <code>Path</code>s (nose cone + fuselage, fins, exhaust flame). The whole thing is under 40 lines, accepts <code>.foregroundColor</code> like an SF&nbsp;Symbol, and scales with dynamic type.
+        </p>
+        <div class="math">
+            <span class="heading">Pattern: procedural icon with Canvas + Path</span>
+            <span class="var">Canvas</span> { <span class="var">context</span>, <span class="var">_</span> <span class="op">in</span><br>
+            &nbsp;&nbsp;<span class="var">var</span> <span class="var">body</span> <span class="op">=</span> <span class="fn">Path</span>()<br>
+            &nbsp;&nbsp;<span class="var">body.move</span>(to: <span class="fn">CGPoint</span>(x: <span class="var">cx</span>, y: <span class="var">topY</span>))<br>
+            &nbsp;&nbsp;<span class="var">body.addQuadCurve</span>(to: ..., control: ...)  <span class="comment">// nose cone</span><br>
+            &nbsp;&nbsp;<span class="var">body.addLine</span>(to: ...)                    <span class="comment">// fuselage sides</span><br>
+            &nbsp;&nbsp;<span class="var">body.closeSubpath</span>()<br>
+            &nbsp;&nbsp;<span class="var">context.fill</span>(<span class="var">body</span>, with: <span class="num">.color</span>(<span class="num">.missionOrange</span>))<br>
+            }<br>
+            <span class="op">.</span><span class="var">frame</span>(width: <span class="var">size</span>, height: <span class="var">size</span>)
+        </div>
+        <p>
+            Reusable pattern for any small icon that doesn't have an SF Symbol equivalent. Cheaper than a bundled image (no asset-catalogue bookkeeping, no memory overhead for a raster), cleaner than emoji (tints properly, respects dynamic type), and more flexible than a filled <code>Shape</code> (multiple sub-paths at different opacities &mdash; e.g. the rocket's flame is drawn at 0.55 opacity for subtle transparency).
+        </p>
+    </div>
+
+    <!-- Texture Mapping -->
+    <div class="deep-dive">
+        <h2>Texture Mapping</h2>
+
+        <p>
+            A planet is an <code>SCNSphere</code>; a texture is a flat rectangle. The bridge is a <em>projection</em> &mdash; a way to unwrap the sphere's surface into a 2D image so a texel on the image corresponds to a specific point on the surface.
+        </p>
+
+        <h3>Equirectangular Projection (all planets and moons)</h3>
+        <p>
+            Every NASA texture in <code>Textures/</code> uses equirectangular (aka "geographic") projection: longitude maps linearly to U and latitude maps linearly to V.
+        </p>
+        <div class="math">
+            <span class="heading">Equirectangular UV &rarr; sphere point</span>
+            <span class="var">longitude</span> <span class="op">=</span> <span class="var">u</span> <span class="op">&times;</span> <span class="num">2&pi;</span>               <span class="comment">// u &isin; [0, 1] spans 0&deg;&ndash;360&deg; east</span><br>
+            <span class="var">latitude</span>  <span class="op">=</span> (<span class="var">v</span> <span class="op">&minus;</span> <span class="num">0.5</span>) <span class="op">&times;</span> <span class="num">&pi;</span>       <span class="comment">// v &isin; [0, 1] spans &minus;90&deg;&ndash;+90&deg;</span><br>
+            <span class="var">sphere.x</span>  <span class="op">=</span> <span class="fn">cos</span>(<span class="var">latitude</span>) <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">longitude</span>)<br>
+            <span class="var">sphere.y</span>  <span class="op">=</span> <span class="fn">sin</span>(<span class="var">latitude</span>)<br>
+            <span class="var">sphere.z</span>  <span class="op">=</span> <span class="fn">cos</span>(<span class="var">latitude</span>) <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">longitude</span>)
+        </div>
+        <p>
+            <code>SCNSphere</code> applies this UV mapping by default, so all we do is load the image and hand it to <code>material.diffuse.contents</code>. The distortion is large near the poles (each latitude row of pixels covers the same map width, but a tiny actual circumference on the globe), which is why NASA texture maps tend to look stretched at the top and bottom &mdash; the sphere stretches them back out into the correct shape.
+        </p>
+
+        <h3>Radial UVs for Saturn's Rings</h3>
+        <p>
+            The rings are a <em>flat disc</em>, not a cylinder or tube, so we can't use <code>SCNTube</code> (its caps map linearly, producing straight bands instead of circular ones). We build custom geometry: 72 radial segments around the ring axis &times; 4 steps from inner edge to outer edge. The U coordinate is the radial fraction (0 at Cassini division inside, 1 at outer edge), V is the azimuthal position. The texture is a thin strip (915&times;64 pixels) representing a single radius of the ring system, which wraps around the disc as U varies.
+        </p>
+        <div class="math">
+            <span class="heading">Ring disc UV generation</span>
+            <span class="comment">// For each vertex at (radialIndex, azimuthalIndex):</span><br>
+            <span class="var">u</span> <span class="op">=</span> <span class="var">radialIndex</span> <span class="op">/</span> <span class="num">radialSegments</span>        <span class="comment">// 0 at inner edge, 1 at outer</span><br>
+            <span class="var">v</span> <span class="op">=</span> <span class="var">azimuthalIndex</span> <span class="op">/</span> <span class="num">azimuthalSegments</span>   <span class="comment">// goes round once per loop</span><br>
+            <span class="var">angle</span> <span class="op">=</span> <span class="var">v</span> <span class="op">&times;</span> <span class="num">2&pi;</span><br>
+            <span class="var">r</span>     <span class="op">=</span> <span class="var">ringInnerKm</span> <span class="op">+</span> <span class="var">u</span> <span class="op">&times;</span> (<span class="var">ringOuterKm</span> <span class="op">&minus;</span> <span class="var">ringInnerKm</span>)<br>
+            <span class="var">vertex</span> <span class="op">=</span> (<span class="var">r</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">angle</span>), <span class="num">0</span>, <span class="var">r</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">angle</span>))
+        </div>
+        <p>
+            The ring material combines a <em>colour map</em> in <code>diffuse.contents</code> (the bright cream bands, Cassini division, dust) with a <em>transparency map</em> in <code>transparent.contents</code> (the alpha GIF, dark where the ring is sparse). Rings are drawn <code>isDoubleSided = true</code> so they look right from above and below, and <code>lightingModel = .constant</code> because Cassini's photograph already baked in the correct lighting.
+        </p>
+
+        <h3>Procedural Textures (Sun)</h3>
+        <p>
+            The Sun's surface texture is generated procedurally at app launch via <code>UIGraphicsImageRenderer</code>. A 1024&times;512 canvas gets 800 small "granulation" cells (bright Gaussian blobs), 40 larger "supergranulation" patches, and a radial limb-darkening gradient. This gives realistic convection-cell detail with zero bundled image assets. The corona textures (4 layers) are also procedural &mdash; just radial gradients from warm white to transparent.
+        </p>
+    </div>
+
+    <!-- Missions Pipeline -->
+    <div class="diagram-section">
+        <h2>Missions Pipeline</h2>
+        <p style="color:#888; font-size:0.9rem; margin-top:-8px; margin-bottom:20px;">
+            All 11 missions ported from the companion web app: Artemis&nbsp;II, Apollo 8/11/13, Cassini-Huygens, Voyager 1/2, Perseverance, New Horizons, Parker Solar Probe, BepiColombo. Waypoint data is extracted one-shot from the web JS into <code>Missions.json</code> (bundled resource). Phases 4&ndash;6 add the UI layer, ISS, and the lazy-follow mission camera. See <code>../solarsystem-web/MISSIONS.md</code> for the shared specification.
+        </p>
+        <div class="mermaid">
+            graph TD
+                J0["js/missions.js<br/>(web app source of truth)"] --> J1["tools/export-missions.mjs<br/>(Node vm sandbox, stubbed imports)"]
+                J1 --> J2["SolarSystem/Resources/Missions.json<br/>(11 missions, 58 events, 213 waypoints)"]
+                J2 --> A["MissionData.all<br/>(DTO decode &rarr; domain structs)"]
+
+                A --> B["MissionManager.initialize"]
+                B --> B1["Resolve anchors:<br/>anchorMoon &rarr; Moon SMA position,<br/>anchorBody &rarr; planet heliocentric"]
+                B1 --> BT{"autoTrajectory<br/>== transfer?"}
+                BT -- "yes (Perseverance)" --> B1T["generateTransferArc<br/>prograde ellipse,<br/>12 samples &times; N segments"]
+                BT -- "no" --> B2
+                B1T --> B2
+                B2["Moon-aligned &rarr; ecliptic rotation<br/>(atan2(moonPos.y, moonPos.x))"] --> B3
+                B3["Centripetal CatmullRom<br/>time-parameterised sampling"] --> B4["Trajectory line<br/>(SCNGeometryElement .line +<br/>per-vertex colour gradient)"]
+                B3 --> B5["Vehicle marker<br/>(emissive SCNSphere + halo)"]
+
+                C["Simulated Date<br/>(per-frame)"] --> D["MissionManager.update"]
+                D --> D1{"Reference<br/>frame?"}
+                D1 -- "geocentric" --> D2["group.position = Earth scene pos"]
+                D1 -- "heliocentric" --> D3["group.position = origin"]
+
+                D --> E{"Vehicle<br/>phase?"}
+                E -- "moonOrbit" --> E1["cos/sin around<br/>Moon scene position"]
+                E -- "moonLanding" --> E2["snap to Moon<br/>scene position"]
+                E -- "moonOrbitReturn" --> E3["cos/sin around Moon<br/>(post-landing)"]
+                E -- "default" --> E4["CatmullRom.sampleAtTime<br/>+ toLocalScene"]
+
+                E1 --> F["marker.position"]
+                E2 --> F
+                E3 --> F
+                E4 --> F
+                F --> G["Scale by camera distance<br/>max(0.04, camDist &times; 0.012)"]
+
+                H["checkEventTrigger"] --> H1["lastTriggeredEvent cursor<br/>+ rewind reset"]
+                I["telemetry"] --> I1["MET, distance (km / AU),<br/>speed (finite diff)"]
+
+                C["activeMissionId selected"] --> FR{"Reference frame?"}
+                FR -- "geocentric" --> FR1["missionBounds &rarr;<br/>Sun-side azimuth,<br/>elevation 17&deg;, fit radius"]
+                FR1 --> FR2["per-frame lerp(0.02)<br/>target = Earth + localCentre"]
+                FR -- "heliocentric" --> FR3["resetToOverview()"]
+                FR2 --> FR4{"User drags?"}
+                FR4 -- "yes" --> FR5["lazyFollowActive = false<br/>(full manual control)"]
+
+                style J0 fill:#1a2a3a,stroke:#4488ff
+                style J1 fill:#1a2a3a,stroke:#4488ff
+                style J2 fill:#1a1a3e,stroke:#88bbff
+                style A fill:#1a1a3e,stroke:#ffaa33
+                style B fill:#1a2a2a,stroke:#44aaaa
+                style BT fill:#2a2a1a,stroke:#aaaa44
+                style B1T fill:#2a1a2a,stroke:#aa44ff
+                style D fill:#1a2a2a,stroke:#44aaaa
+                style E fill:#2a1a2a,stroke:#aa44ff
+                style F fill:#1a1a3e,stroke:#4488ff
+                style H fill:#3a2a0a,stroke:#ffaa33
+                style I fill:#3a2a0a,stroke:#ffaa33
+                style C fill:#1a1a3e,stroke:#ffaa33
+                style FR fill:#2a2a1a,stroke:#aaaa44
+                style FR5 fill:#3a1a1a,stroke:#aa4444
+        </div>
+    </div>
+
+    <!-- Mission Trajectory Maths -->
+    <div class="deep-dive">
+        <h2>Mission Trajectory Maths</h2>
+
+        <p>
+            Mission data is a handful of waypoints (typically 15&ndash;25 per vehicle), not a continuous curve. To render a smooth trajectory we interpolate between waypoints, and to anchor that curve to the right places in space we apply several transforms before sampling.
+        </p>
+
+        <h3>Centripetal Catmull-Rom Splines</h3>
+        <p>
+            Standard &ldquo;uniform&rdquo; Catmull-Rom splines overshoot badly whenever control points are irregularly spaced &mdash; common on mission trajectories with dense waypoints near launch (seconds apart) and sparse waypoints during coast (hours apart). The centripetal variant (alpha = 0.5) uses <em>sqrt of chord length</em> as the knot spacing, which eliminates overshoot and self-intersection in practice.
+        </p>
+        <div class="math">
+            <span class="heading">Centripetal knot spacing (alpha = 0.5)</span>
+            <span class="var">t</span><sub>i+1</sub> <span class="op">=</span> <span class="var">t</span><sub>i</sub> <span class="op">+</span> <span class="fn">sqrt</span>(<span class="fn">distance</span>(<span class="var">P</span><sub>i</sub>, <span class="var">P</span><sub>i+1</sub>))<br>
+            <br>
+            <span class="heading">Barry-Goldman recursion on segment P1&rarr;P2 (with guides P0, P3)</span>
+            <span class="var">A</span><sub>1</sub> <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">P</span><sub>0</sub>, <span class="var">P</span><sub>1</sub>; along [<span class="var">t</span><sub>0</sub>, <span class="var">t</span><sub>1</sub>])<br>
+            <span class="var">A</span><sub>2</sub> <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">P</span><sub>1</sub>, <span class="var">P</span><sub>2</sub>; along [<span class="var">t</span><sub>1</sub>, <span class="var">t</span><sub>2</sub>])<br>
+            <span class="var">A</span><sub>3</sub> <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">P</span><sub>2</sub>, <span class="var">P</span><sub>3</sub>; along [<span class="var">t</span><sub>2</sub>, <span class="var">t</span><sub>3</sub>])<br>
+            <span class="var">B</span><sub>1</sub> <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">A</span><sub>1</sub>, <span class="var">A</span><sub>2</sub>; along [<span class="var">t</span><sub>0</sub>, <span class="var">t</span><sub>2</sub>])<br>
+            <span class="var">B</span><sub>2</sub> <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">A</span><sub>2</sub>, <span class="var">A</span><sub>3</sub>; along [<span class="var">t</span><sub>1</sub>, <span class="var">t</span><sub>3</sub>])<br>
+            <span class="var">C</span>  <span class="op">=</span> <span class="fn">lerp</span>(<span class="var">B</span><sub>1</sub>, <span class="var">B</span><sub>2</sub>; along [<span class="var">t</span><sub>1</sub>, <span class="var">t</span><sub>2</sub>])   <span class="comment">// = point on the curve</span>
+        </div>
+        <p>
+            Three interpolations at the first level, two at the second, one at the third, all the way down to the final point. This is the same structure Three.js's <code>CatmullRomCurve3</code> uses, ported one-to-one to Swift in <code>CatmullRom.centripetal</code>.
+        </p>
+
+        <h3>Time-Parameterised Sampling</h3>
+        <p>
+            Waypoints have <em>timestamps</em> (e.g. &ldquo;TLI at T+2:83h&rdquo;). If we sampled the curve uniformly along arc length, the dense launch waypoints would eat most of the line while the lunar coast compressed to a few pixels, and the marker wouldn't line up with the event banners in time. Instead, we sample uniformly along <em>time</em> and map each time back to the curve parameter:
+        </p>
+        <div class="math">
+            <span class="heading">Uniform-time sampling</span>
+            <span class="comment">// For each sample time t:</span><br>
+            &nbsp;&nbsp;Find the bracketing waypoint index <span class="var">wi</span> where <span class="var">times[wi]</span> &le; <span class="var">t</span> &lt; <span class="var">times[wi+1]</span><br>
+            &nbsp;&nbsp;<span class="var">frac</span>  <span class="op">=</span> (<span class="var">t</span> <span class="op">&minus;</span> <span class="var">times[wi]</span>) <span class="op">/</span> (<span class="var">times[wi+1]</span> <span class="op">&minus;</span> <span class="var">times[wi]</span>)<br>
+            &nbsp;&nbsp;<span class="var">u</span>     <span class="op">=</span> (<span class="var">wi</span> <span class="op">+</span> <span class="var">frac</span>) <span class="op">/</span> (<span class="var">N</span> <span class="op">&minus;</span> <span class="num">1</span>)  <span class="comment">// curve parameter in [0, 1]</span><br>
+            &nbsp;&nbsp;<span class="fn">sample</span>(<span class="var">points</span>, <span class="var">u</span>)  <span class="comment">// centripetal Catmull-Rom at u</span>
+        </div>
+
+        <h3>Moon-Aligned Waypoint Frame (Geocentric Missions)</h3>
+        <p>
+            Lunar-mission waypoints are hand-authored in a frame where +X points toward the Moon at flyby time. This lets a trajectory designer reason about "the spacecraft passes 6,000 km behind the far side of the Moon" without caring about the absolute ecliptic longitude of the Moon on the mission's launch date.
+        </p>
+        <p>
+            At initialisation, we compute the Moon's actual ecliptic direction at flyby time and rotate all waypoints by the difference:
+        </p>
+        <div class="math">
+            <span class="heading">Moon-alignment rotation (once at init, shared by all vehicles)</span>
+            <span class="var">flybyDate</span>   <span class="op">=</span> <span class="var">launchDate</span> <span class="op">+</span> <span class="var">flybyTimeHours</span><br>
+            <span class="var">moonPos</span>     <span class="op">=</span> <span class="fn">moonPosition</span>(<span class="var">moonElements</span>, <span class="var">flybyDate</span>)  <span class="comment">// AU ecliptic</span><br>
+            <span class="var">angle</span>       <span class="op">=</span> <span class="fn">atan2</span>(<span class="var">moonPos.y</span>, <span class="var">moonPos.x</span>)<br>
+            <br>
+            <span class="heading">Apply to every waypoint</span>
+            <span class="var">rotated.x</span>   <span class="op">=</span> <span class="var">wp.x</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">angle</span>) <span class="op">&minus;</span> <span class="var">wp.y</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">angle</span>)<br>
+            <span class="var">rotated.y</span>   <span class="op">=</span> <span class="var">wp.x</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">angle</span>) <span class="op">+</span> <span class="var">wp.y</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">angle</span>)<br>
+            <span class="var">rotated.z</span>   <span class="op">=</span> <span class="var">wp.z</span>  <span class="comment">// out-of-plane component unchanged</span>
+        </div>
+
+        <h3>Anchor Resolution</h3>
+        <p>
+            Hand-authored waypoint coordinates drift: a waypoint labelled &ldquo;Jupiter flyby&rdquo; might sit at approximate (x=4.5, y=-2.3) AU but Jupiter's actual Keplerian position at that date could differ by 0.05 AU. Over tens of waypoints that's enough to make the trajectory visibly miss the planets it's meant to be flying past.
+        </p>
+        <p>
+            The <strong>anchor system</strong> solves this by snapping key waypoints to the real planet / Moon positions at their timestamps:
+        </p>
+        <div class="math">
+            <span class="heading">anchorBody (heliocentric missions)</span>
+            <span class="comment">// At init, for each waypoint with an anchorBody:</span><br>
+            <span class="var">planet</span> <span class="op">=</span> <span class="fn">lookup</span>(<span class="var">wp.anchorBody</span>)<br>
+            <span class="var">pos</span>    <span class="op">=</span> <span class="fn">heliocentricPosition</span>(<span class="var">planet.elements</span>, <span class="var">launchDate</span> <span class="op">+</span> <span class="var">wp.t</span>)<br>
+            <span class="var">wp.x, wp.y, wp.z</span> <span class="op">&larr;</span> <span class="var">pos</span>  <span class="comment">// trajectory now passes through the real planet</span><br>
+            <br>
+            <span class="heading">anchorMoon (geocentric missions)</span>
+            <span class="var">mp</span>        <span class="op">=</span> <span class="fn">moonPosition</span>(<span class="var">moonElements</span>, <span class="var">launchDate</span> <span class="op">+</span> <span class="var">wp.t</span>)  <span class="comment">// AU</span><br>
+            <span class="var">scale</span>     <span class="op">=</span> <span class="var">moonSemiMajorKm</span> <span class="op">/</span> (<span class="fn">length</span>(<span class="var">mp</span>) <span class="op">&times;</span> <span class="var">kmPerAU</span>)<br>
+            <span class="var">wp</span>        <span class="op">&larr;</span> <span class="var">mp</span> <span class="op">&times;</span> <span class="var">kmPerAU</span> <span class="op">&times;</span> <span class="var">scale</span>  <span class="comment">// direction of actual Moon, distance of rendered Moon</span>
+        </div>
+        <p>
+            <strong>Why use the semi-major axis for anchorMoon distance instead of the Moon's actual distance?</strong> The Moon's real distance oscillates by &plusmn;21,000&nbsp;km due to eccentricity. The rendered Moon mesh sits at a fixed distance (its semi-major axis) because its scene radius comes from the moon-distance compression formula. If we snapped waypoints to the actual distance, the trajectory line would miss the rendered Moon mesh by up to 21,000&nbsp;km of compressed scene distance.
+        </p>
+
+        <h3>Auto-Generated Transfer Arcs (Perseverance)</h3>
+        <p>
+            Perseverance's data is just two anchor points &mdash; Earth at launch, Mars at arrival. A straight line between them would be visibly wrong (spacecraft don't fly in straight lines across the solar system). The transfer-arc generator expands those anchors into a Hohmann-style elliptical arc:
+        </p>
+        <div class="math">
+            <span class="heading">Prograde transfer between two anchor points</span>
+            <span class="var">r</span><sub>0</sub>, <span class="var">r</span><sub>1</sub>     <span class="op">=</span> <span class="fn">length</span>(<span class="var">wp</span><sub>0</sub>), <span class="fn">length</span>(<span class="var">wp</span><sub>1</sub>)     <span class="comment">// heliocentric distances in AU</span><br>
+            <span class="var">a</span><sub>0</sub>, <span class="var">a</span><sub>1</sub>     <span class="op">=</span> <span class="fn">atan2</span>(<span class="var">wp</span><sub>0</sub>.y, <span class="var">wp</span><sub>0</sub>.x), <span class="fn">atan2</span>(<span class="var">wp</span><sub>1</sub>.y, <span class="var">wp</span><sub>1</sub>.x)<br>
+            <span class="var">sweep</span>        <span class="op">=</span> <span class="var">a</span><sub>1</sub> <span class="op">&minus;</span> <span class="var">a</span><sub>0</sub>  <span class="comment">// ensure positive (prograde / CCW)</span><br>
+            <br>
+            <span class="comment">// For each intermediate fraction frac &isin; [0, 1]:</span><br>
+            <span class="var">angle</span>  <span class="op">=</span> <span class="var">a</span><sub>0</sub> <span class="op">+</span> <span class="var">sweep</span> <span class="op">&times;</span> <span class="var">frac</span><br>
+            <span class="var">bulge</span>  <span class="op">=</span> (<span class="var">r</span><sub>1</sub> <span class="op">&gt;</span> <span class="var">r</span><sub>0</sub>) <span class="op">?</span> <span class="num">+0.05</span> <span class="op">:</span> <span class="num">&minus;0.03</span>  <span class="comment">// outward bulge for outbound transfer</span><br>
+            <span class="var">r</span>      <span class="op">=</span> <span class="var">r</span><sub>0</sub> <span class="op">+</span> (<span class="var">r</span><sub>1</sub> <span class="op">&minus;</span> <span class="var">r</span><sub>0</sub>) <span class="op">&times;</span> <span class="var">frac</span> <span class="op">+</span> <span class="var">bulge</span> <span class="op">&times;</span> (<span class="var">r</span><sub>0</sub> <span class="op">+</span> <span class="var">r</span><sub>1</sub>) <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">&pi;</span> <span class="op">&times;</span> <span class="var">frac</span>)<br>
+            <span class="var">sample</span> <span class="op">=</span> (<span class="var">r</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">angle</span>), <span class="var">r</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">angle</span>), <span class="fn">lerp</span>(<span class="var">wp</span><sub>0</sub>.z, <span class="var">wp</span><sub>1</sub>.z, <span class="var">frac</span>))
+        </div>
+        <p>
+            The <code>sin(&pi; &times; frac)</code> term peaks at frac=0.5 and is zero at the endpoints, which is exactly the shape of a Hohmann transfer ellipse: widest at the midpoint, pinched at launch and arrival. 12 intermediate samples per segment produces a visibly smooth arc when handed to the CatmullRom resampler.
+        </p>
+
+        <h3>Runtime Moon Phases</h3>
+        <p>
+            Some mission phases can't be expressed as waypoints because they need to stay glued to the Moon as the Moon itself moves. Columbia orbiting the Moon for 65 hours, Eagle's lunar descent and ascent &mdash; these get their marker position computed every frame relative to the Moon's current scene position.
+        </p>
+        <div class="math">
+            <span class="heading">Runtime circular orbit around the Moon (moonOrbit phase)</span>
+            <span class="var">phase</span>      <span class="op">=</span> (<span class="var">t</span> <span class="op">&minus;</span> <span class="var">orbitStart</span>) <span class="op">/</span> <span class="var">periodHours</span> <span class="op">&times;</span> <span class="num">2&pi;</span><br>
+            <span class="var">moonDir</span>    <span class="op">=</span> <span class="fn">normalize</span>(<span class="fn">moonPosition</span>(...))<br>
+            <span class="var">moonScenePos</span> <span class="op">=</span> <span class="fn">toLocalScene</span>(<span class="var">moonDir</span> <span class="op">&times;</span> <span class="var">semiMajorAxisKm</span>)<br>
+            <span class="var">tangent</span>    <span class="op">=</span> <span class="fn">normalize</span>(<span class="var">moonDir</span> <span class="op">&times;</span> <span class="var">worldUp</span>)   <span class="comment">// perpendicular to Earth-Moon line</span><br>
+            <span class="var">normal</span>     <span class="op">=</span> <span class="fn">normalize</span>(<span class="var">tangent</span> <span class="op">&times;</span> <span class="var">moonDir</span>)<br>
+            <span class="var">marker</span>     <span class="op">=</span> <span class="var">moonScenePos</span> <span class="op">+</span> <span class="var">tangent</span> <span class="op">&times;</span> <span class="fn">cos</span>(<span class="var">phase</span>) <span class="op">&times;</span> <span class="var">r</span> <span class="op">+</span> <span class="var">normal</span> <span class="op">&times;</span> <span class="fn">sin</span>(<span class="var">phase</span>) <span class="op">&times;</span> <span class="var">r</span>
+        </div>
+        <p>
+            For <code>moonLanding</code>, the marker just snaps to <code>moonScenePos</code> for the whole window. At trajectory scale, the real 45&nbsp;km descent is invisible after distance compression, so the visually correct choice is to stick the vehicle to the Moon's surface rather than try to model it.
+        </p>
+    </div>
+
+    <!-- Lazy-Follow Mission Camera -->
+    <div class="deep-dive">
+        <h2>Lazy-Follow Mission Camera (Lunar Missions)</h2>
+
+        <p>
+            When a lunar mission is selected, the camera needs to frame the trajectory tightly so the user sees the arc clearly, and it needs to keep framing it tightly as Earth drifts along its heliocentric orbit during the replay. Heliocentric missions don't need this &mdash; the overview camera already works &mdash; so the lazy-follow logic is geocentric-only.
+        </p>
+
+        <h3>Initial Frame: Sun-Side Two-Thirds Illumination</h3>
+        <div class="math">
+            <span class="heading">Camera azimuth placement (on selection)</span>
+            <span class="var">earthPos</span>        <span class="op">=</span> Earth's current scene position<br>
+            <span class="var">sunsideAz</span>       <span class="op">=</span> <span class="fn">atan2</span>(<span class="op">&minus;</span><span class="var">earthPos.x</span>, <span class="op">&minus;</span><span class="var">earthPos.z</span>)  <span class="comment">// negated &rarr; camera between Sun and Earth</span><br>
+            <span class="var">cameraAzimuth</span>   <span class="op">=</span> <span class="var">sunsideAz</span> <span class="op">+</span> <span class="num">0.55</span>   <span class="comment">// ~31&deg; offset for terminator on far side</span><br>
+            <span class="var">cameraElevation</span> <span class="op">=</span> <span class="num">0.3</span>                 <span class="comment">// ~17&deg; above the ecliptic plane</span>
+        </div>
+        <p>
+            <strong>Why the sign flip in atan2?</strong> The camera's spherical coordinates describe its offset from the target (Earth). The Sun is at the scene origin, so the direction "from Earth toward the Sun" is <code>&minus;earthPos / |earthPos|</code>. Using <code>atan2(&minus;x, &minus;z)</code> places the camera in that direction — on the Sun side of Earth. Using <code>atan2(x, z)</code> (unsigned) would place the camera on the <em>anti-Sun</em> side and the target would appear unlit.
+        </p>
+        <p>
+            The 0.55 rad (~31&deg;) offset rotates the camera slightly so the terminator is on the far side of Earth (viewed from the camera), giving us a two-thirds-lit crescent rather than a head-on disc. The 17&deg; elevation gives enough perspective that the trajectory's out-of-plane component reads properly. The same azimuth formula is also used for planet preset focus, so selecting Jupiter or Saturn from the planet picker gives a cinematic Sun-lit view of the planet and its moon system.
+        </p>
+
+        <h3>Fit-to-Viewport Distance</h3>
+        <div class="math">
+            <span class="heading">Camera distance sizing</span>
+            <span class="var">bounds</span>    <span class="op">=</span> trajectory local AABB around Earth<br>
+            <span class="var">radius</span>    <span class="op">=</span> <span class="fn">length</span>(<span class="var">bounds.halfSize</span>)<br>
+            <span class="var">fovFactor</span> <span class="op">=</span> <span class="num">1.4</span> <span class="op">/</span> <span class="fn">tan</span>(<span class="num">&pi;/6</span>)   <span class="comment">// SceneKit default FOV = 60&deg;; 1.4&times; padding for portrait viewport</span><br>
+            <span class="var">distance</span>  <span class="op">=</span> <span class="fn">max</span>(<span class="var">radius</span> <span class="op">&times;</span> <span class="var">fovFactor</span>, <span class="num">1.5</span>)
+        </div>
+        <p>
+            The 1.4&times; padding is a phone-portrait sweet spot &mdash; a narrow viewport needs more leeway than a wide one so the trajectory isn't clipped at the left/right edges. The minimum clamp of 1.5 scene units prevents the camera being so close to a small trajectory that the Earth mesh intersects the near clip plane.
+        </p>
+
+        <h3>Per-Frame Lerp Follow</h3>
+        <p>
+            Earth moves through its heliocentric orbit at 1/365th of a revolution per day of simulated time. At a 10,000&times; replay speed, that's 30&deg; of ecliptic motion per mission &mdash; enough to shift the trajectory off-centre if we didn't track. Each frame:
+        </p>
+        <div class="math">
+            <span class="heading">Lazy-follow camera lerp</span>
+            <span class="var">wanted</span>  <span class="op">=</span> <span class="var">earthScenePos</span> <span class="op">+</span> <span class="var">trajectoryLocalCentre</span><br>
+            <span class="var">current</span> <span class="op">=</span> <span class="var">cameraCoordinator.currentTarget</span><br>
+            <span class="var">target</span>  <span class="op">=</span> <span class="var">current</span> <span class="op">+</span> (<span class="var">wanted</span> <span class="op">&minus;</span> <span class="var">current</span>) <span class="op">&times;</span> <span class="num">0.02</span>  <span class="comment">// 2% of the gap closed per frame</span>
+        </div>
+        <p>
+            The 0.02 lerp factor is a trade-off: larger values (0.1+) cause visible stutter as the camera jumps; smaller values (0.005) feel sluggish because the trajectory drifts off-centre before the camera catches up. 0.02 closes most of the gap within half a second of wall time regardless of replay speed.
+        </p>
+
+        <h3>User-Break Gesture Hook</h3>
+        <p>
+            The moment the user drags or pinches, we stop following &mdash; nothing worse than fighting an auto-camera. The scene coordinator's pan / orbit / pinch handlers fire a <code>userInteractionHandler</code> callback on gesture <code>.began</code> (not on every <code>.changed</code> delta, which would spam). The view model flips <code>lazyFollowActive = false</code>, and <code>stepLazyFollowCamera</code> becomes a no-op for the rest of the session.
+        </p>
+
+        <h3>Event Label Visibility Window</h3>
+        <p>
+            Mission events (TLI, Lunar Flyby, LOI, Splashdown, &hellip;) get 3D labels projected onto the SwiftUI overlay. We don't want them cluttering the screen for the full replay &mdash; each label should appear briefly around when its event fires and then fade.
+        </p>
+        <div class="math">
+            <span class="heading">Event label time window</span>
+            <span class="var">window</span>  <span class="op">=</span> <span class="fn">clamp</span>(<span class="var">durationHours</span> <span class="op">&times;</span> <span class="num">0.03</span>, <span class="num">1</span>, <span class="num">500</span>)  <span class="comment">// 3% of mission, clamped 1&ndash;500 h</span><br>
+            <span class="var">visible</span> <span class="op">=</span> |<span class="var">elapsed</span> <span class="op">&minus;</span> <span class="var">event.t</span>| <span class="op">&lt;</span> <span class="var">window</span>
+        </div>
+        <p>
+            The 3% rule means a 195-hour Apollo 11 mission has a ~6-hour visibility window per label. At 10,000&times; replay, that's about 2 seconds of real time: long enough to read, short enough that labels don't pile up. The 500-hour upper clamp prevents Voyager-length missions (28,000&nbsp;h, 105,000&nbsp;h) from giving each label weeks of visibility and effectively always showing everything.
+        </p>
     </div>
 
     <!-- Orbital Mechanics Deep Dive -->
@@ -515,8 +1211,9 @@
 
         <div class="info-box">
             <div class="label">Moon Distance Compression</div>
-            <p><code>moonSceneDist = parentSceneRadius &times; (realRatio<sup>0.4</sup>) &times; 1.5</code></p>
-            <p>Earth's Moon: 60&times; &rarr; 8.8&times; parent radius. Preserves relative ordering of moons.</p>
+            <p><code>moonSceneDist = parentSceneRadius &times; (realRatio<sup>0.6</sup>) &times; 1.5</code></p>
+            <p>Earth's Moon (real 60.3&times; parent radius) &rarr; pow(0.6) &rarr; 11.7 &rarr; &times;1.5 &rarr; <strong>17.6&times; parent radius</strong>. The exponent trades physical accuracy against visibility: 1.0 would place the Moon off-screen at every sensible zoom; 0.4 (the original) placed it at 8.8&times; but made Galilean moons bunch too tightly around Jupiter. 0.6 is the sweet spot where Earth-Moon reads as "far" and Jupiter's moons stay readable.</p>
+            <p>The same formula is used for <strong>mission trajectory compression</strong> so Apollo trajectories sit at the same scale as the Moon they pass &mdash; see the Mission Trajectory Maths section.</p>
         </div>
 
         <h3>Planet Size Comparison</h3>
@@ -597,8 +1294,9 @@
                 B --> C["SolarSystemSceneView<br/>(UIViewRepresentable)"]
                 B --> D["Labels Overlay<br/>(planets, moons, stars)"]
                 B --> E["InfoPanelView<br/>(date, body info)"]
-                B --> F["Controls Bar<br/>(speed, toggles, picker)"]
+                B --> F["Controls Bar<br/>(speed, toggles, picker,<br/>missions menu)"]
                 B --> Z["Zoom Slider<br/>(log-mapped)"]
+                B --> MUI["Mission UI overlay<br/>(telemetry panel, timeline<br/>slider, event banner)"]
 
                 C --> G["SCNView + Coordinator"]
                 G --> H["Custom Gestures<br/>(pan, orbit, pinch, tap)"]
@@ -712,10 +1410,21 @@
 
         <div class="math">
             <span class="heading">Rotation angle at time T</span>
-            <span class="var">spin</span> <span class="op">=</span> <span class="var">W</span><sub>0</sub> <span class="op">+</span> (<span class="var">daysSinceJ2000</span> <span class="op">/</span> <span class="var">periodDays</span>) <span class="op">&times;</span> <span class="num">2&pi;</span><br>
+            <span class="var">spin</span> <span class="op">=</span> <span class="var">W</span><sub>0</sub> <span class="op">+</span> (<span class="var">daysSinceJ2000</span> <span class="op">/</span> <span class="var">periodDays</span>) <span class="op">&times;</span> <span class="num">2&pi;</span>  <span class="comment">// sign flips for retrograde bodies (Venus, Uranus, Pluto)</span><br>
             <br>
-            <span class="heading">Applied as Euler angles</span>
-            <span class="var">node.eulerAngles</span> <span class="op">=</span> (<span class="var">obliquity</span>, <span class="var">spin</span>, <span class="num">0</span>)
+            <span class="heading">Applied as quaternion composition (not Euler!)</span>
+            <span class="var">tiltQuat</span> <span class="op">=</span> <span class="fn">simd_quatf</span>(angle: <span class="var">obliquity</span>, axis: (<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>))  <span class="comment">// tilt around world X</span><br>
+            <span class="var">spinQuat</span> <span class="op">=</span> <span class="fn">simd_quatf</span>(angle: <span class="var">spin</span>, axis: (<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>))      <span class="comment">// spin around local Y (tilted pole)</span><br>
+            <span class="var">node.simdOrientation</span> <span class="op">=</span> <span class="var">tiltQuat</span> <span class="op">*</span> <span class="var">spinQuat</span>              <span class="comment">// spin first, then tilt in world space</span>
+        </div>
+
+        <p style="margin-top: 1rem;">
+            <strong>Why quaternions instead of Euler angles?</strong> SceneKit composes Euler angles in Y-X-Z order, which means setting <code>eulerAngles = (tilt, spin, 0)</code> applies yaw-then-pitch &mdash; so the tilt axis itself rotates with each spin cycle. The rings appear to oscillate once per planetary day. Quaternion composition <code>tiltQuat * spinQuat</code> applies spin in the body's pre-tilt frame (local Y), then tilts in world space &mdash; the tilt axis stays fixed while the body spins around the tilted pole, just like the real thing.
+        </p>
+
+        <p>
+            Saturn's rings are a child node; we <strong>cancel the parent's spin</strong> in the ring's local frame with <code>ringNode.simdOrientation = simd_quatf(angle: -spin, axis: (0,1,0))</code> so the rings inherit only the tilt and stay fixed in the equatorial plane while the cloud bands rotate underneath.
+        </p>
         </div>
 
         <div style="display: flex; justify-content: center; margin: 1.5rem 0;">

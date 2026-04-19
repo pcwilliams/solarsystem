@@ -1,8 +1,8 @@
 # SolarSystem
 
-A real-time solar system simulation for iPhone, powered by real orbital mechanics, NASA texture maps, and 8,920 real stars from the Hipparcos catalogue.
+A real-time solar system simulation for **iPhone and Mac**, powered by real orbital mechanics, NASA texture maps, and 8,920 real stars from the Hipparcos catalogue. One multi-platform Xcode target builds natively for iOS and macOS from the same source code.
 
-![SolarSystem - Saturn with rings, moons, and real star names](solarsystem.png)
+![SolarSystem - Saturn with rings, moons, and real star names](https://pcwilliams.design/dev/solarsystem/solarsystem.png)
 
 ## Features
 
@@ -17,12 +17,14 @@ A real-time solar system simulation for iPhone, powered by real orbital mechanic
 - **Planet shortcuts** — Tap planet labels or use the globe menu to fly to any body and see its moon system
 - **Time control** — Real-time through 1,000,000x speed, reverse, Reset to Now
 - **Smart labels** — Separate toggles for planet, moon, and star labels. Auto-deconflicted, occluded behind planets, persisted across launches
+- **11 space missions** — Historical and active mission trajectories with multi-vehicle support, runtime lunar orbit/landing phases, live telemetry (MET, distance, speed), and timed event detection. Lunar missions (`apollo8`, `apollo11`, `apollo13`, `artemis2`), interplanetary gravity-assist tours (`cassini`, `voyager1`, `voyager2`, `bepicolombo`, `parker`), transfer arcs (`perseverance`), and outer planet flybys (`newhorizons`) all selectable via `-mission <id>` or the in-app missions menu. The mission UI shows a glass-morphism telemetry panel, an orange timeline scrubber, and animated event banners as each trajectory milestone passes. Lunar missions get a lazy-follow camera that frames Earth and the trajectory Sun-side until you drag. Trajectory data is one-shot exported from the companion web app into a bundled JSON resource — re-run `node tools/export-missions.mjs` when upstream data changes.
+- **International Space Station** — Toggleable via the Satellites menu. Procedural 3D model with central truss, pressurised modules, four pairs of solar panels, and two radiators; orbits Earth at 408 km altitude and 51.6° inclination with a 92-minute period.
 
 ## Requirements
 
-- iOS 17.0+
-- iPhone (optimised for iPhone 16 Pro)
+- iOS 17.0+ / macOS 14.0+ (Sonoma)
 - Xcode 16+
+- iPhone build optimised for iPhone 16 Pro; Mac build runs natively on Apple Silicon and Intel
 
 ## Setup
 
@@ -45,6 +47,8 @@ No API keys, no external dependencies — pure Apple frameworks.
 
 ## Controls
 
+### iPhone / iPad
+
 | Gesture | Action |
 |---------|--------|
 | One-finger drag | Pan / translate the view |
@@ -54,12 +58,26 @@ No API keys, no external dependencies — pure Apple frameworks.
 | Tap body or label | Select and fly to that body |
 | Double-tap | Return to full solar system view |
 
+### Mac
+
+| Input | Action |
+|-------|--------|
+| Left-mouse drag | Pan / translate the view |
+| Right-mouse drag | Orbit / rotate the viewing angle |
+| Scroll wheel / 2-finger scroll | Zoom in and out |
+| Trackpad pinch | Zoom in and out |
+| Zoom slider | Fine zoom control |
+| Click body or label | Select and fly to that body |
+| Double-click | Return to full solar system view |
+
 ### Toolbar
 
 - **Play/Pause** — Freeze or resume orbital motion
 - **Speed menu** — 0.1x to 1,000,000x, reverse, Reset to Now
 - **Orbit toggle** — Show/hide orbital path lines
 - **Label menu** — Independent toggles for Planets, Moons, Stars
+- **Satellites menu** — Toggle the ISS model (antenna icon)
+- **Missions menu** — Pick any of 11 space missions to replay, or stop the current replay (airplane icon)
 - **Planet picker** — Jump to any planet, the Sun, or overview
 - **Home** — Return to the full solar system overview
 
@@ -67,15 +85,39 @@ No API keys, no external dependencies — pure Apple frameworks.
 
 | Argument | Example | Description |
 |----------|---------|-------------|
-| `-timeScale` | `10000` | Speed up orbital motion |
+| `-timeScale` | `10000` | Speed up orbital motion (overridden by `-mission`) |
 | `-date` | `2024-01-01` | Override current date |
 | `-focus` | `saturn` | Start focused on a body |
+| `-mission` | `apollo11` | Replay a mission: jumps simulation time to the launch date and applies an auto-speed preset |
+| `-showISS` / `-hideISS` | | Toggle the ISS satellite model |
 | `-showOrbits` | | Draw orbital paths |
 | `-hideLabels` | | Hide all labels |
 | `-innerOnly` | | Inner solar system only |
 | `-logPositions` | | Log AU coordinates to console |
+| `-frameLog` | | Print per-frame timing diagnostics (fps, slow frames, sub-phase breakdown) |
+
+## Running on Mac
+
+The fastest way to get the app onto your Mac:
+
+```bash
+./run-macos.sh                                 # build Release, install to /Applications, launch
+./run-macos.sh -mission apollo11 -focus earth  # any launch-arg works
+```
+
+The script builds Release, kills any running instance, copies into `/Applications` (or `~/Applications` if unprivileged), and opens a fresh copy. Pass any of the launch args below on the command line.
 
 ## Testing
+
+Run the unit suite (scaling, CatmullRom curves, mission waypoint resolution, event detection):
+
+```bash
+xcodebuild -project SolarSystem.xcodeproj -scheme SolarSystem \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' test \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+Build only:
 
 ```bash
 xcodebuild -project SolarSystem.xcodeproj -scheme SolarSystem \
