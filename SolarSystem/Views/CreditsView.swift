@@ -74,14 +74,28 @@ struct CreditsView: View {
                 }
                 .padding()
             }
+            // Grouped-background colour is iOS-only; on macOS we use the
+            // windowBackgroundColor equivalent via the SwiftUI material.
+            #if os(iOS)
             .background(Color(.systemGroupedBackground))
+            #else
+            .background(Color(.windowBackgroundColor))
+            #endif
             .navigationTitle("Credits")
+            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
+            #else
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            #endif
         }
     }
 

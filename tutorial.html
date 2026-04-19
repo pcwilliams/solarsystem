@@ -322,5 +322,204 @@
         <div class="tech-note">Quaternion multiplication order matters: <code>tiltQuat * spinQuat</code> applies spin first (in the body's pre-tilt frame), then tilt (in world space). The ring's counter-rotation also uses quaternions: <code>simd_quatf(angle: -spin, axis: (0,1,0))</code> in the local frame cancels the parent's spin while inheriting the stable tilt. This is a classic 3D rotation pitfall &mdash; Euler angles are intuitive to write but compose incorrectly when axes depend on each other.</div>
     </div>
 
+    <!-- Step 13 -->
+    <div class="step">
+        <span class="step-number">13</span>
+        <h2 class="step-title">Back-porting from the Web &mdash; Phase 1 Foundations</h2>
+
+        <div class="prompt">It's been a while since we touched the iOS project. Meanwhile we built a web version in <code>../solarsystem-web</code> with space missions, an ISS, and a bunch of other features. Would you be up for porting those enhancements back into iOS? I'd love to do it in stages and apply everything we've learned about unit testing and simulator verification along the way.</div>
+
+        <div class="response">Proposed a six-phase plan: (1) foundations, (2) mission infrastructure plus Apollo 11 end-to-end as a proof of concept, (3) the remaining ten missions with waypoint data exported as JSON from the web, (4) the mission UI layer (menu, timeline slider, telemetry panel, event banners), (5) ISS, (6) polish. Phase 1 centralised the moon-distance compression constants so trajectory rendering can reuse them: <code>SceneBuilder.moonDistExponent</code> moved from 0.4 to 0.6, giving the Moon a scene distance of 17.6 Earth radii (real 60.3) instead of 8.8. Pure-math statics were marked <code>nonisolated</code> so unit tests don't need to jump to the main actor. The camera coordinator's <code>setCamera</code> gained optional azimuth and elevation parameters plus read-only accessors &mdash; groundwork for the Sun-side mission-framing camera in Phase 6.</div>
+
+        <div class="outcome">Eight unit tests covering scene distance, sqrt radius clamps, moon compression, monotonicity, and the zero-parent-radius guard. Simulator verification showed Jupiter's Galilean moons, Saturn's moons, and Earth's Moon all spread out more realistically with the new exponent.</div>
+
+        <div class="tech-note"><code>SceneBuilder</code> is <code>@MainActor</code>-isolated for SceneKit access, which bled into every static call site. The fix was to mark the pure-math statics (<code>sceneDistance</code>, <code>sceneRadius</code>, <code>moonSceneDistance</code>, and their constants) <code>nonisolated</code>. This lets tests call them freely from Swift Testing's default non-main context while preserving main-actor safety for everything that actually touches SceneKit state.</div>
+    </div>
+
+    <!-- Step 14 -->
+    <div class="step">
+        <span class="step-number">14</span>
+        <h2 class="step-title">Apollo 11 &mdash; Phase 2 Mission Infrastructure</h2>
+
+        <div class="prompt">Let's do Phase 2. Start with Apollo 11 end-to-end &mdash; if it works, the rest are mechanical. And remember: thorough unit tests plus simulator verification before calling it done.</div>
+
+        <div class="response">Built four new files: <code>Mission.swift</code> for the data shape (Mission / Vehicle / Waypoint / MissionEvent / MoonOrbit / MoonLanding), <code>MissionData.swift</code> with Apollo 11's three-vehicle timeline (Saturn V, Columbia, Eagle), <code>CatmullRom.swift</code> as a pure-Swift port of Three.js's centripetal spline (alpha = 0.5), and <code>MissionManager.swift</code> for scene-graph construction, per-frame updates, telemetry, and event detection. The trajectory line uses <code>SCNGeometryElement</code> with primitive type <code>.line</code> and a per-vertex colour gradient via the <code>.color</code> semantic, matching how the starfield renders its B-V colours. Moon-aligned waypoints rotate into the ecliptic frame at init using <code>atan2(moonPos.y, moonPos.x)</code> at flyby time. <code>anchorMoon</code> waypoints snap to the Moon's actual direction but at its semi-major-axis distance, so they land on the rendered Moon mesh instead of its eccentrically-offset true position. During runtime, Columbia orbits the Moon with cos/sin motion in a plane perpendicular to the Earth-Moon line, while Eagle walks a three-phase lifecycle: orbit, descent-to-surface snap, post-ascent orbit.</div>
+
+        <div class="outcome">Twenty unit tests all passing &mdash; CatmullRom endpoints land exactly on control points, time-parameterised sampling hits each waypoint at its declared timestamp, anchorMoon snaps to within 1% of the Moon's semi-major axis, events fire once and reset cleanly after a rewind past launch. In the simulator, <code>-mission apollo11 -focus earth</code> jumps to 16 July 1969, auto-selects 10,000x replay speed, and renders the trajectory arcing from Earth to the Moon and back. Columbia's marker tracks the trajectory, snaps into a lunar orbit around T+76h, and exits cleanly on the return leg.</div>
+
+        <div class="tech-note">One subtle bug slowed the first end-to-end run: <code>cameraCoordinator.didSet</code> was calling <code>focusOnBody</code> before <code>updatePositions</code> had ever run, so the camera locked onto Earth's default-initialised position at the origin &mdash; which is where the Sun is. The fix was to call <code>updatePositions(projectLabels: false)</code> synchronously inside the <code>didSet</code>, so every node is at its simulated-date position before focus maths read from it. Worth remembering for any feature that sets an initial camera target from node positions during app boot.</div>
+    </div>
+
+    <!-- Step 15 -->
+    <div class="step">
+        <span class="step-number">15</span>
+        <h2 class="step-title">Keeping the Docs Live</h2>
+
+        <div class="prompt">Time to make sure CLAUDE.md, README.md, architecture.html, and tutorial.html are up to date &mdash; and let's keep them current at the end of every phase from now on.</div>
+
+        <div class="response">Refreshed the port-status table and added a full Missions section to CLAUDE.md (architecture, mission data shape, coordinate handling, runtime phases, scene graph, telemetry, event detection, tests), noted the new <code>-mission</code> launch arg, and added six new gotchas to the Known Gotchas list (main-actor isolation for pure math, Moon SMA alignment, anchorMoon scale, event rewind reset, CatmullRom knot clamp, line primitive indexing). Added a Missions Pipeline Mermaid diagram to architecture.html and wove the mission group into the scene-graph diagram. Updated README.md with the missions feature callout and the <code>-mission</code> launch arg. Recorded the feedback as a persistent rule so future phases don't skip the doc-refresh step.</div>
+
+        <div class="outcome">All four living documents describe the current state consistently: Phase 1 and Phase 2 complete, Apollo 11 shipping, and Phases 3&ndash;6 queued up. Future phases will end with the same doc-refresh pass.</div>
+
+        <div class="tech-note">The project conventions already required living docs (&ldquo;must be updated whenever a new file, service, or architectural decision is added&rdquo;), but under momentum it's easy to defer. Saving the rule to persistent memory with a clear &ldquo;why&rdquo; &mdash; contradictions between docs are worse than stale content &mdash; turns it into a checkpoint rather than an afterthought.</div>
+    </div>
+
+    <!-- Step 16 -->
+    <div class="step">
+        <span class="step-number">16</span>
+        <h2 class="step-title">Ten More Missions &mdash; Phase 3 via JSON Export</h2>
+
+        <div class="prompt">Let's go! On to Phase 3 &mdash; export the waypoints from the web JS once as bundled JSON, then port the other ten missions. And keep the same unit-test and simulator-verification rigour.</div>
+
+        <div class="response">Wrote <code>tools/export-missions.mjs</code>: a small Node 22 extractor that slices <code>../solarsystem-web/js/missions.js</code> up to <code>class MissionManager</code>, stubs out its imports (THREE, sceneBuilder, orbitalMechanics, solarSystemData, textureGenerator), evaluates the remaining data declarations in a <code>node:vm</code> sandbox, and serialises <code>ALL_MISSIONS</code> to <code>SolarSystem/Resources/Missions.json</code>. 2,481 lines of JSON: 11 missions, 11 vehicles, 58 events, 213 waypoints. Rewrote <code>MissionData.swift</code> as a loader over a small DTO layer (<code>MissionJSON</code> / <code>VehicleJSON</code> / <code>WaypointJSON</code>) so the domain types stay free of Codable boilerplate. Added <code>Vehicle.autoTrajectory</code> and <code>MissionManager.generateTransferArc</code> &mdash; a port of the web's Hohmann-style arc generator &mdash; so Perseverance's two anchor points (Earth launch, Mars landing) expand into a smooth elliptical transfer. Registered <code>Missions.json</code> as a bundled resource via four new pbxproj entries.</div>
+
+        <div class="outcome">Twenty-four unit tests all passing, including four new ones: every mission loads from JSON, the seven interplanetary missions are flagged heliocentric, Perseverance carries <code>autoTrajectory: "transfer"</code>, and the transfer arc generates a monotonically increasing timeline. Simulator verification showed each trajectory clearly: Cassini's full VVEJGA gravity-assist loop, Voyager 1 heading to Jupiter, Parker's multi-loop solar approach, BepiColombo's Mercury orbit, Apollo 13's free-return swing, and Artemis II's crewed lunar flyby arc.</div>
+
+        <div class="tech-note">The DTO pattern turned out to be the right call even for "almost the same shape" JSON. The domain <code>Mission</code> / <code>Vehicle</code> have custom initialisers with ergonomic defaults, which precludes synthesised Decodable. Adding a thin DTO layer with <code>toDomain()</code> conversion keeps both sides clean: the JSON side can grow fields over time without touching the domain layer, and the domain layer keeps whatever shape is most useful to the rest of the app. The <code>node:vm</code> sandbox approach also beat every alternative for the one-shot extraction &mdash; no ESM loader hackery, no npm install, just run the file in a context where its imports resolve to empty stubs.</div>
+    </div>
+
+    <!-- Step 17 -->
+    <div class="step">
+        <span class="step-number">17</span>
+        <h2 class="step-title">Mission UI &mdash; Phase 4 Telemetry, Timeline, Events</h2>
+
+        <div class="prompt">Let's go for it. You're doing very well!</div>
+
+        <div class="response">Built four SwiftUI overlays into a single <code>MissionUIViews.swift</code> file so the mission UI lives together: a <code>MissionsMenu</code> dropdown in the toolbar (airplane-departure icon, lists all 11 missions with checkmarks, plus a Stop replay item), a <code>MissionTimelineSlider</code> pinned above the zoom slider with an orange thumb and MET readout (dragging pauses playback via a one-way <code>timelineScrubbing</code> flag that restores prior pause state on release), a <code>MissionTelemetryPanel</code> glass-morphism HUD showing Mission Elapsed Time, distance (auto km or AU based on reference frame), and speed, and a <code>MissionEventBannerView</code> that slides up for four seconds whenever the simulation first crosses an event timestamp. The view model grew an <code>updateMissionUIState()</code> step that runs every third frame (same cadence as label projection) to compute telemetry, publish the event banner, and arm a one-shot end-of-mission speed reset so the simulation stops racing past splashdown.</div>
+
+        <div class="outcome">Thirty-two unit tests all passing, including seven new ones covering MET formatting at the day boundary, distance formatting across heliocentric AU / small km / thousands of km, and speed formatting above/below 100 km/s. Simulator verification showed Apollo 11's TLI event banner firing at T+2:83h, the telemetry panel reading T+10:19:39 / 39k km / 1.26 km/s during translunar coast, and the orange timeline slider tracking mission progress from T+0 through T+8d.</div>
+
+        <div class="tech-note">Three subtleties made the UI feel right. First, the event banner uses a fresh <code>UUID()</code> as its SwiftUI identity rather than the event name, so SwiftUI re-runs the slide-in animation when the same event fires twice (rewind + replay). Second, the timeline slider's <code>timelineScrubbing</code> Published property toggles <code>isPaused</code> through a saved <code>wasPausedBeforeScrub</code> flag, so the view model can't fight the drag gesture with per-frame elapsed-hours sync. Third, one test expression tripped Swift's type-checker timeout (<code>2 * 24 + 14 + 32.0 / 60.0 + 8.0 / 3600.0</code>) &mdash; the fix was splitting into explicitly-typed Double intermediates. Worth noting for any test file that mixes Int and Double literals in long arithmetic.</div>
+    </div>
+
+    <!-- Step 18 -->
+    <div class="step">
+        <span class="step-number">18</span>
+        <h2 class="step-title">ISS &mdash; Phase 5 Satellites</h2>
+
+        <div class="prompt">Please deploy to my phone, then proceed with 5 and 6.</div>
+
+        <div class="response">Added the ISS to <code>SolarSystemData</code> with real orbital elements (408 km altitude, 51.6&deg; inclination, 92.7-minute period) as a regular moon of Earth, so the existing moon-positioning, label-projection, and rotation pipelines apply for free. <code>SceneBuilder.createBodyNode</code> was special-cased for <code>body.id == "iss"</code> to return a procedural cross-shaped model instead of a sphere: a central truss (long horizontal box), pressurised modules (shorter cross-bar), four pairs of blue solar panels laid flat in the orbital plane, and two white radiators. All constant-lit, zero external assets. Added <code>showISS</code> to the view model (UserDefaults-backed, off by default) and an <code>antenna.radiowaves</code> Satellites menu button in the toolbar. The label-projection path skips ISS when the toggle is off so "ISS" doesn't float next to Earth with no mesh beneath it.</div>
+
+        <div class="outcome">The ISS renders as a recognisable cross-shaped silhouette at close zoom, complete with its characteristic solar panel pairs. Zooming in shows the 3D structure clearly; at overview zoom it reduces to a tiny bright dot just above Earth. Two unit tests added to confirm ISS is registered as an Earth moon with the right orbital elements.</div>
+
+        <div class="tech-note">Treating ISS as a moon was a clean shortcut &mdash; the per-frame position update, quaternion rotation, and label projection all work without any ISS-specific code paths. The only special-case is <code>createBodyNode</code> (procedural geometry) and one label-skip when hidden. This pattern will extend naturally to other satellites like Hubble or JWST: add the orbital elements, add to the relevant planet's moons array, and (optionally) define a procedural model.</div>
+    </div>
+
+    <!-- Step 19 -->
+    <div class="step">
+        <span class="step-number">19</span>
+        <h2 class="step-title">Lazy-Follow Camera &mdash; Phase 6 Polish</h2>
+
+        <div class="prompt">Please deploy to my phone, then proceed with 5 and 6. Don't forget to keep the .md and .html files updated :)</div>
+
+        <div class="response">For lunar missions, computing the trajectory's local bounding box (<code>MissionManager.missionBounds</code>) and snapping the camera to Earth + that local centre with a Sun-side azimuth (Earth's ecliptic direction plus 0.55 radians for a terminator-on-the-far-side view) and elevation 0.3 radians. Distance sized to fit the trajectory's local radius with 1.4&times; padding for portrait viewports. A per-frame lerp at 0.02 keeps the camera target glued to <code>earthScenePos + localCentre</code> so the trajectory stays centred as Earth drifts heliocentrically. Gesture handlers in the scene coordinator now fire a <code>userInteractionHandler</code> on <code>.began</code>, which the view model uses to clear <code>lazyFollowActive</code> &mdash; the user gets full manual control the moment they drag. Heliocentric missions bypass framing and call <code>resetToOverview</code> instead. Event labels (TLI, Lunar Flyby, Saturn Arrival, ...) project into the SwiftUI overlay within a &plusmn;3&percnt; window of the mission duration around their timestamp (clamped 1&ndash;500 h), so at the default auto-speed each label appears for about two seconds of screen time then fades.</div>
+
+        <div class="outcome">Apollo 11 now launches directly into a tight, Sun-side frame of Earth and the Moon without needing <code>-focus earth</code>. Cassini stays in the full overview so the VVEJGA trajectory is clear. Dragging breaks the follow instantly &mdash; no fight between the gesture and the lerp. Thirty-seven unit tests green; build and device install clean.</div>
+
+        <div class="tech-note">Two things worth remembering. First, azimuth in SceneKit's coordinate system uses x/z (not x/y) because scene y is ecliptic z &mdash; using x/y would place the camera below the ecliptic plane. The exact formula needed a sign flip later on (see Step&nbsp;21) to land on the correct side of Earth. Second, wiring user-break as <code>userInteractionHandler</code> on <code>.began</code> rather than every <code>.changed</code> delta avoids spamming the view model each frame of a long drag. One call is enough to flip <code>lazyFollowActive</code> off for the rest of the session.</div>
+    </div>
+
+    <!-- Step 20 -->
+    <div class="step">
+        <span class="step-number">20</span>
+        <h2 class="step-title">Wrapping Up</h2>
+
+        <div class="prompt">Let's go!</div>
+
+        <div class="response">Over the course of six phases, the iOS app went from a feature-complete orrery to a full mission-replay experience with an ISS satellite. All the work ported faithfully from the companion web app &mdash; same orbital mechanics, same moon-distance compression, same mission data, same UI shapes &mdash; but expressed in Swift, SceneKit, SwiftUI, and pbxproj-registered resources. Trajectory data comes from a one-shot JSON export so the two projects stay in sync without duplicating code.</div>
+
+        <div class="outcome">Phase 1: foundations (scaling + camera API). Phase 2: mission infrastructure + Apollo 11. Phase 3: all 11 missions via JSON export. Phase 4: mission UI (menu, timeline, telemetry, events). Phase 5: ISS. Phase 6: lazy-follow camera + 3D event labels. Thirty-seven unit tests, clean build on simulator and device, every living document up to date.</div>
+
+        <div class="tech-note">The consistent pattern across phases: a bundled JSON source of truth, DTO-&gt;domain decoding, pure Swift math that's nonisolated for testing, SceneKit for rendering, SwiftUI overlays for UI. Each phase added one new concept (moon compression constants, the mission manager, the JSON pipeline, the UI layer, procedural geometry, the camera orchestration) on top of what the previous phase had established. Iterate one phase at a time with unit tests first, simulator verification second, and docs refreshed before moving on &mdash; that cadence let the whole port land without any phase blocking the next.</div>
+    </div>
+
+    <!-- Step 21 -->
+    <div class="step">
+        <span class="step-number">21</span>
+        <h2 class="step-title">Post-Port Polish &mdash; Niggles, Sign Flips, Rocket Icons</h2>
+
+        <div class="prompt">Just a couple of niggles so far: 1. The planet presets are zoomed quite a long way out. 2. The mission icon should ideally be a rocket not a plane. 3. The missions don't start with the camera angled so the target planet is lit well by the sun, unlike in the web version. 4. The trajectory for Artemis doesn't go beyond the moon and round the back. Other than that, looks great!</div>
+
+        <div class="response">Four fixes in one pass, all small individually but each unlocking a clearly better feel:
+            <ul>
+                <li><strong>Planet presets too far out.</strong> After Phase&nbsp;1's moon-distance exponent change (0.4&nbsp;&rarr;&nbsp;0.6), moon systems became about twice as wide, so the old <code>systemExtent&nbsp;&times;&nbsp;3.7</code> multiplier now framed planets from roughly twice the required distance. Ported the web's tuning (<code>0.8&times;</code> for moon-hosting bodies, <code>6.0&times;</code> for moonless ones, each scaled by a portrait-aware factor <code>0.5&nbsp;+&nbsp;0.5&nbsp;&times;&nbsp;min(aspect,&nbsp;1)</code>). Jupiter now frames tight with Io and Ganymede in shot; Mercury and Venus stay visible instead of becoming pinpricks.</li>
+                <li><strong>Icon should be a rocket, not a plane.</strong> SF&nbsp;Symbols has no rocket glyph, and bundling a custom image asset would break the "pure Apple frameworks" rule. Built a <code>RocketIcon</code> SwiftUI view that draws the silhouette &mdash; nose cone, fuselage, side fins, exhaust flame &mdash; with a <code>Canvas</code> and three <code>Path</code>s. Accepts <code>.foregroundColor</code> like an SF Symbol, so it tints cleanly alongside the other toolbar icons.</li>
+                <li><strong>Sun-side azimuth sign flip.</strong> The mission camera was landing the target <em>dark</em> &mdash; the opposite of the web version. Root cause: the camera's spherical offset is measured <em>from</em> the target, so the direction pointing at the Sun (scene origin) is <code>&minus;earthPos&nbsp;/&nbsp;|earthPos|</code>. The original code used <code>atan2(x,&nbsp;z)</code> which pointed the offset <em>away</em> from the Sun &mdash; camera ended up on the anti-Sun side, terminator facing the camera. Flipping the signs to <code>atan2(&minus;x,&nbsp;&minus;z)&nbsp;+&nbsp;0.55&nbsp;rad</code> puts the camera between the Sun and Earth for a two-thirds-lit view. Also extended the same formula to regular planet presets so Jupiter and Saturn pick up the same Sun-side framing.</li>
+                <li><strong>Artemis trajectory disappeared behind the Moon.</strong> The waypoint data was fine (all 28 points including the behind-Moon section at T+108&ndash;122h), but the trajectory line was being depth-occluded by the Moon mesh &mdash; only the Earth-facing half of the arc was visible. Trajectory lines are reference overlays, not physical objects, so it's correct for the whole arc to show through. Setting <code>readsFromDepthBuffer&nbsp;=&nbsp;false</code> on the line material (on top of the existing <code>writesToDepthBuffer&nbsp;=&nbsp;false</code>) makes the full loop visible regardless of what it passes behind.</li>
+            </ul>
+        </div>
+
+        <div class="outcome">Each fix verified in the simulator before device install: Jupiter frames tight with its moons in shot and the correct face lit; the rocket icon sits happily in the toolbar; Artemis&nbsp;II's arc now loops cleanly around the Moon and back. Two new CLAUDE.md gotchas captured (azimuth sign flip, trajectory depth bypass) so the same bugs can't come back silently.</div>
+
+        <div class="tech-note">The sign-flip bug is worth internalising. Spherical coordinates around a <em>non-origin</em> target feel natural (&ldquo;azimuth 0 means look along positive&nbsp;Z from the target&rdquo;), but the moment you want the camera to look <em>toward</em> the scene origin, the direction from target to origin is <code>&minus;target&nbsp;/&nbsp;|target|</code>, not <code>+target&nbsp;/&nbsp;|target|</code>. Easy to get wrong, easy to miss when the simulator happens to show the target at a time when it was Sun-side of Earth anyway. The fix is an unconditional sign flip, applied once in each of the two focus paths.</div>
+    </div>
+
+    <!-- Step 22 -->
+    <div class="step">
+        <span class="step-number">22</span>
+        <h2 class="step-title">Event Banner to the Top</h2>
+
+        <div class="prompt">Let's move the mission highlights popup to the top center of the screen, so it doesn't hide the mission in progress.</div>
+
+        <div class="response">Pulled the <code>MissionEventBannerView</code> out of the bottom control stack and gave it its own top-centre overlay <code>VStack</code> in <code>ContentView</code>, with an 88pt top spacer so it sits just below the date/info bar. Card width bumped from 300 to 320pt and horizontal alignment switched from leading to centred (text inside remains leading-aligned so it stays readable). Transition flipped from <code>move(edge: .bottom)</code> to <code>move(edge: .top)</code> so the banner now slides down into view from above, matching its new position.</div>
+
+        <div class="outcome">Banner no longer obscures the spacecraft marker or Moon during events &mdash; TLI, Lunar Flyby, LOI all fire up top while the mission continues visibly below. Kept as a free-floating ZStack overlay rather than part of the main VStack so it doesn't push telemetry, timeline, or the toolbar around when it appears and disappears.</div>
+
+        <div class="tech-note">Two composition details: (1) the spacer at the top of the banner's VStack is a fixed-height <code>Color.clear</code>, not a <code>Spacer()</code>, because <code>Spacer()</code> would expand to fill available vertical space and the banner would drift to the bottom. A fixed clear rectangle reserves exactly the room the info panel needs, no more. (2) The inner <code>VStack(alignment: .leading)</code> text stays leading-aligned while the outer card uses default (centre) horizontal alignment in its parent row &mdash; two independent alignment decisions at two layers of the hierarchy.</div>
+    </div>
+
+    <!-- Step 23 -->
+    <div class="step">
+        <span class="step-number">23</span>
+        <h2 class="step-title">Native macOS from the Same Source</h2>
+
+        <div class="prompt">Could this project &mdash; the iOS one &mdash; easily port to native macOS too? Without changing much code?</div>
+
+        <div class="response">Audited the iOS code and found about 50 UIKit-typed references across five files &mdash; UIColor, UIImage, UIGraphicsImageRenderer, UIViewRepresentable, and the gesture recognisers. The estimate came back as "half a day" so I took a swing at it in six phases:
+            <ul>
+                <li><strong>Phase A &ndash; Platform abstraction.</strong> Added <code>Extensions/Platform.swift</code> with four typealiases (<code>PlatformColor</code>, <code>PlatformImage</code>, <code>PlatformView</code>, <code>PlatformViewRepresentable</code>) plus two CGImage bridging helpers that hide the UIImage / NSImage construction-signature divergence.</li>
+                <li><strong>Phase B &ndash; UIKit &rarr; Platform types.</strong> Mechanical <code>sed</code> pass across SceneBuilder, MissionManager, ViewModel, MissionUIViews. Deleted <code>import UIKit</code> from ViewModel (no longer needed). Rewrote TextureGenerator from <code>UIGraphicsImageRenderer</code> (iOS-only) to a direct <code>CGContext</code> path that renders identically on both platforms with a shared bitmap helper.</li>
+                <li><strong>Phase C &ndash; Multi-platform gestures.</strong> Added <code>#if canImport(UIKit)</code> / <code>#else</code> branches in <code>SolarSystemSceneView</code>: iOS keeps UIPanGestureRecognizer (1-finger translate, 2-finger orbit), UIPinchGestureRecognizer, UITap (single + double). macOS gets NSPanGestureRecognizer with <code>buttonMask = 0x1</code> (left drag = translate) and <code>buttonMask = 0x2</code> (right drag = orbit), NSMagnificationGestureRecognizer (trackpad pinch), NSClickGestureRecognizer (single + double). Scroll-wheel zoom needed a <code>ScrollZoomSCNView</code> subclass overriding <code>scrollWheel(with:)</code> because NSGestureRecognizer doesn't cover scroll events. Gesture <em>handlers</em> all funnel into shared <code>applyPan</code> / <code>applyOrbit</code> / <code>applyPinchZoom</code> methods so the camera maths stays single-sourced.</li>
+                <li><strong>Phase D &ndash; Multi-platform target.</strong> Changed project-level <code>SDKROOT</code> from <code>iphoneos</code> to <code>auto</code>, added <code>SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx"</code> plus <code>MACOSX_DEPLOYMENT_TARGET = 14.0</code> (Sonoma). Dropped the target-level <code>SUPPORTED_PLATFORMS</code> override so the target inherits both iOS and macOS from the project. Set <code>SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO</code> to get native AppKit rather than Catalyst. One target, two destinations.</li>
+                <li><strong>Phases E + F &ndash; Tests, bug-fixing, docs.</strong> Unit suite runs identically on both platforms (<code>xcodebuild -destination 'platform=macOS' test</code>). Fixed three cross-platform gotchas the first macOS build flushed out: <code>SCNVector3</code> component type is Float on iOS but CGFloat on macOS (added <code>SCNVector3(Double, Double, Double)</code> and <code>.adding(Double, Double, Double)</code> helpers), <code>CADisplayLink.init(target:selector:)</code> is iOS-only (macOS uses a <code>Timer</code> at 60 Hz on the common run-loop mode), and a closure in <code>MissionManager</code>'s moon-orbit maths was too complex for the macOS Swift type-checker (extracted into a named <code>orbitAroundMoon</code> method).</li>
+            </ul>
+        </div>
+
+        <div class="outcome">34 unit tests green on both iOS Simulator and macOS. Build succeeds for <code>platform=iOS</code> and <code>platform=macOS</code> from the same target, same sources. Launch arguments &mdash; <code>-mission apollo11</code>, <code>-focus jupiter</code>, <code>-timeScale 5000</code> &mdash; work identically on both via <code>xcrun simctl launch … -- -mission apollo11</code> on iOS and <code>open -n SolarSystem.app --args -mission apollo11</code> on Mac. Standard macOS navigation: left-drag to pan, right-drag to orbit, scroll / pinch to zoom, click to select, double-click to reset.</div>
+
+        <div class="tech-note">Three takeaways for porting SwiftUI + SceneKit iOS apps to macOS. First, <strong>the typealias layer is your friend</strong> &mdash; once <code>PlatformColor</code> / <code>PlatformImage</code> / etc. are in place, most of the search-and-replace is zero-risk. Second, <strong>SCNVector3's component type</strong> (Float vs CGFloat) is the single most common per-platform error; build a Double-based helper early and you'll dodge dozens of small breakages. Third, <strong>the macOS Swift type-checker has shorter timeouts</strong> for complex expressions than iOS &mdash; heavyweight closures that compile on iOS may time out on macOS and need extracting into named methods. All of these are one-time costs; once done, the same source tree builds cleanly forever.</div>
+    </div>
+
+    <!-- Step 24 -->
+    <div class="step">
+        <span class="step-number">24</span>
+        <h2 class="step-title">Hunting a macOS Stutter with Instrumentation</h2>
+
+        <div class="prompt">labels better! Still stuttering once per second. Why not add some trace with timestamps and check for yourself?</div>
+
+        <div class="response">Good instinct &mdash; guessing at performance bugs is usually slower than measuring. Added a <code>-frameLog</code> launch argument that prints any frame whose tick gap exceeds 20&nbsp;ms (dropped frame at 60&nbsp;Hz) or whose work exceeds 5&nbsp;ms, plus a once-per-second summary of fps and worst-times. First run showed the baseline was a healthy 60&nbsp;fps / 3&nbsp;ms worst-work, punctuated by spikes where <code>pos=265ms ui=yes</code> &mdash; <em>updatePositions</em> was the culprit, specifically on UI-update frames. Split that phase into five sub-timers (bodies, stars, deconflict, mission-update, mission-UI) and ran again: every stutter was entirely in the <code>bodies</code> phase, with everything else sub-millisecond. Drilled one level deeper by wrapping individual <code>projectLabel</code> calls and the output was damning &mdash; <code>slow projectLabel Earth (16.6ms)</code>, <code>slow projectLabel ISS (16.5ms)</code>, repeating. <strong>16.5&nbsp;ms is exactly one 60&nbsp;Hz display frame.</strong> <code>SCNView.projectPoint</code> was blocking the main thread waiting for a render-thread sync on every single call. Twenty-six bodies &times; 16.5&nbsp;ms per call = 430&nbsp;ms of stalls crammed into every UI-update frame. Replaced the <code>projectPoint</code> calls with manual matrix projection: cache <code>projection &times; inverse(camera.simdWorldTransform)</code> once per frame as a <code>simd_float4x4</code>, and project each body with a pure-SIMD multiply plus perspective divide plus NDC-to-screen mapping. About 100&nbsp;ns per label, sub-millisecond for all twenty-six combined, and the output is already in SwiftUI top-left-origin coords so no per-platform Y flip is needed.</div>
+
+        <div class="outcome">Before: <code>fps~46 worst-work=266ms</code>. After: <code>fps~60 worst-work=2ms</code>. Glassy smooth at 10,000&times; playback. Both platforms still pass all 34 unit tests. The <code>-frameLog</code> flag stays in the codebase so the same diagnostic path can pick apart any future regression in one command. Nice side effect: the iOS label projection got the same speedup even though it wasn't stuttering visibly.</div>
+
+        <div class="tech-note">Four reusable lessons from the session. First, <strong>cheap instrumentation pays off quickly</strong> &mdash; the frame logger was thirty lines and located the bug in two iterations. Second, <strong>print healthy baselines alongside anomalies</strong> &mdash; the once-per-second <code>summary</code> line made it obvious that normal frames were 3&nbsp;ms, so a 265&nbsp;ms frame was 80&times; off, not 2&times; off. Third, <strong>exactly-one-display-frame timings are a signature</strong> &mdash; when you see durations matching 16.7&nbsp;ms / 33.3&nbsp;ms / 50.0&nbsp;ms at 60&nbsp;Hz, you're usually looking at render-thread sync, not CPU work. Fourth, <strong>bypass framework conveniences you can reproduce cheaply</strong> &mdash; <code>projectPoint</code> is opaque; a ten-line SIMD matrix multiply does the same job, is provably synchronous, and happens to also be about a hundred times faster. Whenever the framework method is called in a hot loop and does more work than arithmetic, that's a prompt to consider replacing it.</div>
+    </div>
+
+    <!-- Step 25 -->
+    <div class="step">
+        <span class="step-number">25</span>
+        <h2 class="step-title">Labels That Stick &mdash; Building the Projection Matrix Ourselves</h2>
+
+        <div class="prompt">Labels still seem to have the label on top of the planet &mdash; see running app now. Actually tracks much better but is always overlaid on the planet so very hard to read. Would be great to take into account the radius of the object on-screen and offset by that (plus a bit).</div>
+
+        <div class="response">Two follow-up issues from the <code>projectPoint</code>-bypass fix, both traced back to the projection matrix itself. First, labels drifted <em>horizontally</em> on macOS while vertical tracking was fine. Single-axis bugs point straight at a single matrix term &mdash; the <code>[0][0]</code> aspect component &mdash; so the fix was to stop reading <code>camera.projectionTransform</code> (which on macOS returns a matrix whose aspect doesn't track the live viewport) and build the matrix ourselves from <code>camera.fieldOfView</code> + <code>view.bounds</code> each frame. Hit one gotcha on the way: <code>SCNCameraProjectionDirection</code> only has <code>.horizontal</code> and <code>.vertical</code> cases, no <code>.automatic</code> despite the convention suggesting one. macOS defaults to horizontal, iOS to vertical; the two use mirror-image <code>xScale</code> / <code>yScale</code> formulae.</div>
+
+        <div class="response">Second issue: even after the horizontal drift was fixed, labels still sat directly on top of the planets because the overlay had a fixed <code>-16&nbsp;pt</code> vertical offset. Jupiter and the Sun at close zoom span hundreds of points &mdash; sixteen is nowhere near enough. Solution: offset each label by the body's <em>actual</em> on-screen radius plus a small margin, derived from the same cached projection matrix. A first attempt used an empirical <code>r / clip.w * 300</code> formula (borrowed from the pre-existing star-occlusion code) but that undershot on widescreen Mac windows by 3&ndash;4&times;. Replaced with the correct <code>worldRadius * pixelsPerUnit / clip.w</code>, where <code>pixelsPerUnit = yScale * (viewportHeight / 2)</code> comes directly from the projection matrix. Now labels float just above every body at every zoom, from Mercury at overview to the Sun filling the screen.</div>
+
+        <div class="outcome">Labels stick to their bodies horizontally and vertically across the full zoom range. Both platforms pass all 34 unit tests unchanged. The <code>8&nbsp;pt</code> floor handles stars and the procedural ISS model (no <code>SCNSphere</code> geometry, so nominal zero radius) &mdash; they still get a readable gap.</div>
+
+        <div class="tech-note">Two takeaways. First, <strong>single-axis visual bugs are matrix-term bugs</strong> &mdash; when only the horizontal or only the vertical is off, go straight to the projection matrix and inspect its <code>[0][0]</code> / <code>[1][1]</code> values rather than fiddling with empirical constants. Second, <strong>derive visual constants from the matrix you're rendering with</strong>. The <code>300</code> in <code>r / clip.w * 300</code> felt plausible on iOS but was just an eyeball fit for one particular viewport. The correct <code>yScale * height / 2</code> is the same factor SceneKit uses internally to size the sphere on screen, so it's guaranteed to match the rendering &mdash; no fudging per platform or per window size.</div>
+    </div>
+
 </body>
 </html>

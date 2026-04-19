@@ -11,10 +11,16 @@ import simd
 
 enum OrbitalMechanics {
 
-    // MARK: - Julian Date
+    // MARK: - Astronomical Constants
 
-    /// J2000.0 epoch expressed as a Julian Date Number.
+    /// J2000.0 epoch expressed as a Julian Date Number — the standard reference
+    /// moment for modern orbital elements (2000-01-01T12:00:00 TT).
     static let j2000: Double = 2451545.0
+
+    /// One astronomical unit in kilometres (IAU 2012 definition). Single source
+    /// of truth: any heliocentric-to-km or moon-orbit-to-AU conversion should
+    /// reference this constant rather than inlining the literal.
+    static let kmPerAU: Double = 149_597_870.7
 
     /// Convert a Foundation Date to Julian Date Number.
     /// Uses the algorithm from Meeus, "Astronomical Algorithms" (Chapter 7).
@@ -131,9 +137,10 @@ enum OrbitalMechanics {
         let E = solveKepler(M: M, e: e)
         let nu = trueAnomaly(E: E, e: e)
 
-        // Distance in km, then convert to AU
+        // Distance in km, then convert to AU so the result can be summed with
+        // parent-planet heliocentric positions without unit mismatches.
         let r = moonElements.semiMajorAxisKm * (1.0 - e * cos(E))
-        let rAU = r / 149597870.7
+        let rAU = r / kmPerAU
 
         // Simple inclined orbit (no node precession)
         let incl = moonElements.inclination.degreesToRadians
