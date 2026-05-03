@@ -250,6 +250,16 @@ The simulator does NOT replicate everything. Always test on device for:
 - **@AppStorage** for persisting UI preferences across launches
 - **`.contentShape(Rectangle())`** for full-row tap targets
 
+### GPU rendering — 3D surfaces, terrain, waterfalls, landscapes
+
+For any feature that renders a 2D value field as a lit, animated 3D surface (frequency × time, day × hour, X × Y × any-Z, ridgelines, terrain), use the **`3dsurface`** skill. It captures the canonical Metal pipeline, mesh, camera math, lighting, smoothing, and animation patterns extracted from HeartMap and Spectrum — including the non-obvious decisions (fixed colour scales, smoothing-decoupled-from-colour, face normals, locked camera) that make a surface read as *stunning* rather than just correct.
+
+### Apple Health / HealthKit
+
+For any feature that reads heart rate, steps, workouts, sleep, or other Apple Health data, use the **`healthkit`** skill. It captures the actor-based service shape, authorization (single combined prompt; read perms aren't queryable), the optimized fetch patterns (per-month queries, server-side bucketing via `HKStatisticsCollectionQuery + .cumulativeSum`, parallel `async let`), the three-phase load (disk-cache seed → current-month refresh → background stream), the empty-result fallback to demo data, infinity-safe JSON disk caching, workout activity type → label/symbol mapping, and entitlements/provisioning gotchas (wildcard profiles can't carry HealthKit).
+
+For *clinical interpretation* of that data — fitness scores, resting heart rate calculations, AHA active-minute zones, age-adjusted scoring, evidence-based step thresholds — use the **`health`** skill. It's platform-agnostic (useful in web dashboards too) and always carries an explicit "not medical advice" disclaimer.
+
 ## App Icons
 
 Generated programmatically using **Python/Pillow** — not designed in a graphics tool. Three variants at 1024x1024:
@@ -454,12 +464,369 @@ A step-by-step record of how the app was built. Use collaborative prompt tone �
 - Plain Markdown in `.md` files. Images use `![alt](src)` syntax, not `<img>` tags
 - HTML docs use a shared dark theme with CSS custom properties and Mermaid.js loaded from CDN
 
+## Multi-platform iOS+macOS apps
+
+A single Xcode target can build for both `iphoneos`/`iphonesimulator` and `macosx`. ~99% of the code is platform-neutral; the differences are funneled through a small set of typealiases plus a handful of narrowly-scoped `#if` blocks. Pattern proven on a SceneKit solar-system app — see SolarSystem's `Extensions/Platform.swift`.
+
+### Platform.swift typealiases
+
+In `Extensions/Platform.swift`:
+
+| Typealias | iOS | macOS |
+|-----------|-----|-------|
+| `PlatformColor` | `UIColor` | `NSColor` |
+| `PlatformImage` | `UIImage` | `NSImage` |
+| `PlatformView` | `UIView` | `NSView` |
+| `PlatformViewRepresentable` | `UIViewRepresentable` | `NSViewRepresentable` |
+
+Plus `makePlatformImage(cgImage:size:)` and `cgImage(from:)` helpers for `UIImage`↔`NSImage` bridging where construction differs.
+
+**Rule**: outside `Platform.swift` (and a handful of files that genuinely need `#if`), never write `UIColor`/`UIImage`/UIKit-typed names directly. Use the `Platform…` aliases and most code stays one-line.
+
+The places that *do* still need `#if canImport(UIKit)` in practice:
+- Gesture recognisers (UIKit and AppKit APIs diverge meaningfully)
+- The frame-tick loop (different display-link constructors)
+- SwiftUI modifiers that exist on only one platform (`.statusBarHidden`, `navigationBarTitleDisplayMode`, `topBarTrailing`, etc.)
+
+### Frame-tick loop
+
+Use `CADisplayLink` on both platforms — just constructed differently:
+
+- **iOS**: `CADisplayLink(target: self, selector: ...)` on the main run loop, display-synchronised 30–60 Hz.
+- **macOS 14+**: `scnView.displayLink(target: self, selector: ...)` — the NSView-bound form. Binds to whichever display the window is on so ticks stay synced to that screen's VBlank.
+
+**Don't try `Timer.scheduledTimer` on macOS as a substitute.** It produces visible ~1-per-second stutters because Timer's cadence drifts in and out of phase with the 60 Hz refresh. Only the real display link is reliable.
+
+Because the macOS display link needs an SCNView/NSView to bind to, the start-animation request can arrive before the view is connected (SwiftUI's `onAppear` can fire before `makeNSView` completes). Park the request in a `pendingAnimationStart` flag and re-issue once the view's `didSet` runs.
+
+### Gesture conventions (macOS vs iOS)
+
+The AppKit Y axis is inverted relative to UIKit. macOS pan/orbit handlers must flip `dy` (e.g. `lastPoint.y - translation.y`) so "drag up = look up" stays consistent with iOS. All actual camera/transform maths stays shared between platforms — only the input plumbing differs.
+
+Typical macOS gesture map for a 3D scene:
+
+| Input | Action | Implementation |
+|-------|--------|----------------|
+| Left-mouse drag | Pan target | `NSPanGestureRecognizer` with `buttonMask = 0x1` |
+| Right-mouse drag | Orbit | `NSPanGestureRecognizer` with `buttonMask = 0x2` |
+| Trackpad pinch | Zoom | `NSMagnificationGestureRecognizer` |
+| Scroll wheel / 2-finger scroll | Zoom | Subclass overriding `scrollWheel(with:)` |
+| Single click | Select | `NSClickGestureRecognizer` (`numberOfClicks = 1`) |
+| Double click | Reset | `NSClickGestureRecognizer` (`numberOfClicks = 2`) |
+
+### SCNVector3 component types
+
+`SCNVector3.x/y/z` is `Float` on iOS but `CGFloat` on macOS. Two helpers in `SCNVector3+Math.swift` (or equivalent) hide the gap:
+
+- `SCNVector3(_ x: Double, _ y: Double, _ z: Double)` — build a vector from `Double` components.
+- `SCNVector3.adding(_ dx: Double, _ dy: Double, _ dz: Double) -> SCNVector3` — offset by `Double` deltas, returning a new vector.
+
+Use these wherever you previously wrote `SCNVector3(x, y, z)` with `Float` arithmetic — one-line call sites compile on both platforms.
+
+### Launching with arguments (Debug from DerivedData)
+
+Same `ProcessInfo.processInfo.arguments` parsing pattern as iOS, but the launcher is different:
+
+```bash
+APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/<Project>-*/Build/Products/Debug/<Project>.app -maxdepth 0)
+open -n "$APP_PATH" --args -mode someMode -timeScale 5000
+```
+
+`open -n` launches a fresh instance each time (`-n` for "new"); drop it to reuse the running copy. The `--args` flag feeds everything after it into `ProcessInfo.processInfo.arguments`. For Release-built apps installed to `/Applications`, just point `open -n` at the bundle there.
+
 ## Common Gotchas
 
 - **Keychain: always delete before add** to avoid `errSecDuplicateItem`
 - **SwiftUI `.refreshable` cancels structured concurrency** — wrap network calls in an unstructured `Task`
 - **Sandbox entitlements:** macOS apps are sandboxed by default — ensure `com.apple.security.files.user-selected.read-write` or similar entitlements are set for file access
 - **MusicKit / AppleScript:** `MusicKit` is the modern API for Apple Music access; `AppleScript` bridging via `NSAppleScript` is a fallback for operations MusicKit doesn't cover
+- **`Timer.scheduledTimer` is not a frame clock** — it drifts in and out of phase with 60 Hz refresh, producing ~1 Hz stutters. Use `scnView.displayLink(target:selector:)` (macOS 14+) for any per-frame work bound to a SceneKit view; for non-SceneKit frame work, use `CVDisplayLink` directly.
+- **AppKit Y axis is inverted vs UIKit** — flip `dy` in any pan / drag handler shared with iOS code, otherwise the "drag up = look up" convention reverses on macOS.
+
+---
+
+
+# Space Mechanics & Celestial Rendering
+
+Conventions for any app that simulates planet / moon / spacecraft motion and renders it in 3D — distilled from a multi-platform SceneKit solar-system port.
+
+## Constants (single source of truth)
+
+Keep these as named constants on a single `OrbitalMechanics` (or equivalent) namespace; never inline the literals:
+
+| Name | Value | Notes |
+|------|-------|-------|
+| J2000.0 | `2451545.0` | Reference Julian Date for all element epochs |
+| Days/Julian century | `36525.0` | For `T = (JD - J2000) / 36525` |
+| AU in km | `149_597_870.7` | IAU 2012 definition |
+| Earth equatorial radius | `6378.137` km (or `6371` mean) | Used in geocentric scene scaling |
+
+If the IAU revises any of these, you change one place.
+
+## Orbital mechanics pipeline (Keplerian, CPU)
+
+For tens of bodies the cost is microseconds per frame — no GPU compute benefit. Pipeline:
+
+1. `julianDate(from: Date) -> Double` — Meeus algorithm, Gregorian → JD.
+2. `julianCenturies(from: Date) -> Double` — `(JD - 2451545.0) / 36525.0`.
+3. `elements.elements(at: T) -> CurrentElements` — base value + rate × T (per JPL).
+4. `meanAnomaly = L - varpi`, normalised to `[0, 2π)` via `truncatingRemainder`.
+5. `solveKepler(M, e) -> E` — Newton-Raphson with initial guess `E0 = M + e·sin(M)`, tolerance `1e-8`, max 50 iterations.
+6. `trueAnomaly(E, e) -> ν = 2·atan2(sqrt(1+e)·sin(E/2), sqrt(1-e)·cos(E/2))`.
+7. `r = a · (1 - e·cos(E))` — heliocentric distance.
+8. Rotate by Ω, I, ω to ecliptic `(x, y, z)`.
+
+**Numerical gotchas:**
+- Use `Double` for Julian dates and elements. `Float` precision is insufficient.
+- For high eccentricity (`e > 0.9`), the `M + e·sin(M)` initial guess still converges but bound iterations defensively.
+- Always wrap angles via `truncatingRemainder(dividingBy: 2·π)` to keep `M` in `[0, 2π)`.
+
+For moons, simplified circular orbits with period-based mean motion are usually accurate enough: `M = longitudeAtEpoch + (2π / period) · daysSinceJ2000`.
+
+## IAU rotation model (every body)
+
+Each body gets `RotationProperties(periodHours, obliquity, w0, tidallyLocked)`. Apply per frame with **quaternion composition**, not Euler angles:
+
+```
+finalRotation = tiltQuat(around X axis) * spinQuat(around Y axis)
+```
+
+**Why quaternions, not Euler:** SceneKit applies Euler angles in Y-X-Z order, so writing `eulerAngles = (tilt, spin, 0)` causes the tilt axis itself to rotate with the spin and you get a wobble per spin cycle. With quaternion composition, tilt is fixed in space and spin is around the tilted pole — physically correct.
+
+Tidally locked moons just match their orbital period. A ring system (e.g. Saturn's) needs to **counter-rotate in local frame** to cancel the parent planet's spin so the ring stays in the equatorial plane.
+
+## Coordinate system mapping
+
+Common Apple-3D convention:
+
+- **Orbital mechanics**: heliocentric ecliptic — x, y in the ecliptic plane, z perpendicular.
+- **SceneKit / RealityKit**: y is up. Map `scene.x = ecliptic.x`, `scene.y = ecliptic.z`, `scene.z = -ecliptic.y`.
+
+This means when you compute angles in the scene, "horizontal position" is `(x, z)`, not `(x, y)`. Using `(x, y)` for an azimuth like `atan2(x, y)` will silently place things below the ecliptic plane.
+
+## Distance / radius scene scaling
+
+Real distances span 4+ orders of magnitude. Pure realism makes the inner system invisible. Three formulas keep ordering correct while bringing everything into view:
+
+```
+sceneDistance(au)        = log(1 + au / 0.5) * 15            // planets, heliocentric
+sceneRadius(km)          = sqrt(km) * 0.00125                // planet radii (floor 0.012)
+moonSceneDistance(ratio) = pow(realRatio, 0.6) * 1.5         // moon distance from parent
+```
+
+- `0.5` is the "knee" — distances under that AU compress less aggressively. Tune for inner-system visibility.
+- `sqrt` (rather than linear or log) gives Jupiter ~3.3× Earth (real is 11.2×) — readable without overwhelming.
+- Moon compression: with exponent `0.6` and scale `1.5`, the Moon sits at ~17.6 Earth radii (real 60.3). Exponent `0.4` collapses it too far (~8.8). `0.6` is the sweet spot.
+
+**Centralise these.** Any mission/trajectory rendering code must use the *same* formulas as the body-positioning code, otherwise vehicles drift away from the bodies they should hug. Mark static helpers `nonisolated` so they're callable from `@MainActor` and pure-math contexts alike.
+
+Geocentric mission scaling matches moon scaling:
+```
+geocentricSceneR(km) = earthSceneR * pow(distKm / earthRadiusKm, 0.6) * 1.5
+```
+
+Use the parent's **semi-major axis** (not its instantaneous distance) when placing satellites/orbiters near a body — actual distance fluctuates with eccentricity (Moon: ±21,000 km) and makes vehicles miss the rendered mesh.
+
+## Star catalogue rendering
+
+Bundle **HYG (Hipparcos/Yale/Gliese) v38**, public domain. Filter to naked-eye visibility (`mag ≤ 6.5`) — that's roughly 8,920 stars. Map RA/Dec to a celestial sphere at large radius (`r = 500` scene units works well).
+
+Use **4 brightness tiers** with different point sizes (mag < 1.5 → 3–8 px; mag 5–6.5 → 0.8–2 px) and **per-vertex B-V colour** for spectral type (blue-white O/B → white A → yellow G → orange K → red M).
+
+Label only the brightest ~120 named stars (Sirius, Vega, Betelgeuse, …). The label-occlusion check (hide a star label when a planet's screen disc covers it) is `O(stars × bodies)` per frame — keeping labels at ~120 stays cheap.
+
+## Saturn-style rings: use custom disc geometry
+
+`SCNTube` UV-maps caps **linearly**, not radially, so a ring-strip texture stretches and warps. Build a custom flat disc:
+
+- 72 radial segments × 4 ring segments
+- `u` maps 0 (inner radius) to 1 (outer radius) — radially across the texture
+- Apply ring colour map + alpha transparency for density
+- `lightingModel = .constant` so it stays visible without a normal map
+- Counter-rotate each frame to cancel parent's spin (see IAU rotation note)
+
+## Mission / trajectory rendering
+
+Each mission is a `SCNNode` group child of the scene. Geocentric missions (Apollo, Artemis) reposition the group to Earth's scene location every frame; heliocentric missions (Voyager, Cassini) stay at the origin. **Trajectory line shape is pre-computed at init** — only the group position updates per frame.
+
+### Centripetal Catmull-Rom (alpha = 0.5)
+
+Smooth waypoint sequences with centripetal Catmull-Rom (alpha = 0.5, matching Three.js's `CatmullRomCurve3`). **Sample by uniform time, not arc length**, so the marker advances linearly with mission time.
+
+Knot-clamp guard: minimum knot delta `1e-8` prevents division-by-zero when two adjacent waypoints coincide (anchored waypoints at similar timestamps can collide).
+
+### Moon-aligned waypoint frames
+
+Lunar-mission waypoints are usually authored with `+X toward the Moon at flyby time`, in km. At init:
+
+1. Compute the Moon's ecliptic angle at the flyby instant.
+2. Rotate all waypoints by that angle to ecliptic.
+3. Now any launch date yields a physically aligned trajectory.
+
+`anchorMoon: true` on a waypoint replaces it with the Moon's actual ecliptic direction × **semi-major-axis distance** (not instantaneous distance, which is eccentric — see scene-scaling note).
+
+`anchorBody: "planet_id"` on a heliocentric waypoint replaces it with that planet's `heliocentricPosition(...)` at time `t`.
+
+### Runtime lunar orbit / landing phases
+
+Don't try to express tight close-up motion as waypoints. Add explicit phase descriptors:
+
+| Phase | Behaviour |
+|-------|-----------|
+| `moonOrbit(start, end, period, radiusKm)` | Each frame: `phase = (t - start) / period · 2π`, position = `moonScenePos + tangent·cos·r + normal·sin·r` where tangent/normal are perpendicular to the Earth-Moon line |
+| `moonLanding(start, end)` | Marker snaps to `moonScenePos` for the entire window |
+| `moonOrbitReturn` | Same as `moonOrbit` for post-landing ascent |
+
+Orbit radius in scene units: `sceneDistance(sma + radiusKm) - sceneDistance(sma)` so the close-orbit shrinks proportionally with the same `pow(0.6)` compression as the body itself.
+
+### `autoTrajectory: "transfer"` (Hohmann arcs)
+
+For interplanetary transfers (e.g. Earth→Mars), expand 2–3 anchor waypoints into an elliptical arc:
+- Prograde (CCW) sweep between anchor angles
+- Linear radius interpolation with a `sin(π · frac)` outward bulge
+- 12 intermediate samples per segment
+
+**Order matters**: resolve `anchorBody` waypoints to real planet positions *first*, then expand the transfer arc, then CatmullRom-sample. The transfer-arc generator expects already-resolved x/y/z, not anchor sentinels.
+
+### Line geometry
+
+`SCNGeometryElement(primitiveType: .line, ...)` takes **pairs** of indices, not a strip. Build `[0,1, 1,2, 2,3, …]` for a connected polyline.
+
+**Trajectory lines should bypass the depth buffer:** set both `writesToDepthBuffer = false` and `readsFromDepthBuffer = false`. Without `readsFromDepthBuffer = false`, the half of an Apollo flyby behind the Moon disappears into the lunar mesh and the trajectory appears to terminate at the lunar horizon.
+
+### Event detection
+
+Each mission has a list of `MissionEvent(t, name, detail, showLabel)`. `checkEventTrigger(simulatedDate)` returns the next unfired event whose timestamp was just crossed. Each event fires once via a `lastTriggeredEvent[missionId]` cursor; a rewind past the cursor-pointed event resets it so replays work.
+
+**The rewind-reset check must run unconditionally** — even when simulation time is outside the mission's active window — so jumping far before launch still clears the cursor.
+
+## Camera framing math
+
+### Sun-side framing (planet picks, mission selection)
+
+Place the camera between the Sun (at scene origin) and the target so the day side faces the camera, then offset slightly so the terminator falls on the far side for a two-thirds-lit view:
+
+```swift
+azimuth   = atan2(-targetPos.x, -targetPos.z) + 0.55  // ~31° off Sun direction
+elevation = 0.3                                       // ~17°
+```
+
+**Sign matters.** The camera's spherical offset is *from* the target, so the direction toward the Sun is `-targetPos / |targetPos|`. Using `atan2(targetPos.x, targetPos.z)` (positive args) places the camera on the anti-Sun side and the target renders unlit.
+
+Distance:
+```swift
+distance = extent * baseMultiplier * (0.5 + 0.5 * min(aspect, 1))
+```
+
+- `baseMultiplier = 0.8` for moon-hosting bodies (Earth, Mars, Jupiter, Saturn) — frame includes moons.
+- `baseMultiplier = 6.0` for moonless ones (Mercury, Venus, Uranus, Neptune, Pluto, Sun) — pull back to give context.
+- The aspect-scaled portrait factor tightens the frame on phones where the constraining dimension is much smaller than landscape.
+
+### Lazy-follow mission camera (geocentric only)
+
+For Apollo/Artemis-style missions that orbit Earth:
+
+1. Compute `missionBounds(missionId)` — the trajectory's local AABB (Earth-relative). Returns `nil` for heliocentric missions (use overview reset instead).
+2. Apply Sun-side framing as above, with `distance = radius / tan(30°) * 1.4` to fit the trajectory's local radius into a portrait viewport.
+3. Per-frame, lerp the camera target toward `earthScenePos + localCenter` at `0.02/frame` so the trajectory stays centred as Earth drifts.
+4. Hook the gesture coordinator's `.began` callback (not `.changed`) to clear the lazy-follow flag — user touches anywhere → full manual control for the rest of the session.
+
+Heliocentric missions span AU; framing them tightly breaks because the trajectory overlaps the Sun. Skip framing and do an overview reset.
+
+### Framing reads node positions, not init defaults
+
+Before any camera-framing math reads `node.position`, run the per-frame `updatePositions(...)` once for the current simulated date. Otherwise nodes are still at their default origin and you'll frame on `(0, 0, 0)` (the Sun). Same gotcha applies to launch-arg `-focus` handling — defer until the camera coordinator connects, then run positions, then frame.
+
+## SceneKit gotchas (everything below has bitten this domain)
+
+### `allowsCameraControl` conflicts with programmatic camera
+
+SceneKit's built-in `allowsCameraControl` maintains internal state that fights any programmatic camera moves. **Disable it entirely** and implement custom gestures with explicit spherical state (`target`, `distance`, `azimuth`, `elevation`).
+
+### `SCNText` can't hold constant screen size
+
+3D text labels grow/shrink with zoom. For HUD-style labels that must stay readable at all zoom levels, project 3D positions to screen coords each frame and render with SwiftUI `Text` views overlaid on the SCNView.
+
+### `SCNView.projectPoint` blocks the render thread on macOS
+
+Each call waits ~16.7 ms (one 60 Hz frame) for a render-thread sync. Projecting 26 bodies per UI-update frame at high time-scales = 230–280 ms stutter every ~1 s. **Bypass it**: build the view × projection matrix once per frame, then do the world → clip → screen maths with SIMD (sub-millisecond for dozens of points). Same code path on iOS is also ~100× faster than `projectPoint`.
+
+### `camera.projectionTransform`'s aspect term doesn't track viewport on macOS
+
+The matrix it returns has a `[0][0]` term that doesn't match the live `view.bounds` aspect, so labels drift horizontally from their bodies. Construct the projection matrix yourself from `camera.fieldOfView` + live aspect each frame.
+
+```
+horizontal FOV (macOS default):  xScale = f,         yScale = f * aspect
+vertical   FOV (iOS default):    xScale = f / aspect, yScale = f
+where f = 1 / tan(fov/2)
+```
+
+### `SCNCameraProjectionDirection` has no `.automatic` case
+
+Only `.horizontal` and `.vertical`. macOS defaults to horizontal, iOS to vertical. Applying the wrong formula stretches one axis.
+
+### Label screen-radius needs the real projection factor
+
+To offset labels just above each body's on-screen disc:
+
+```
+cachedPixelsPerUnit = yScale * (viewportHeight / 2)   // cached per frame
+screenR             = worldRadius * cachedPixelsPerUnit / clip.w
+offsetY             = max(8, screenR + 4)             // 8 pt floor for non-sphere nodes
+```
+
+A rough `r / clip.w * 300` formula undershoots on widescreen Mac windows by 3–4× — labels land *inside* the planet disc.
+
+### SwiftUI label overhead
+
+100+ labels re-rendered via `@Published` every frame kills performance. Throttle re-projection to every 3rd frame, hide labels entirely during zoom-slider drags.
+
+## Performance debugging
+
+For real-time scenes, ship a `-frameLog` launch arg that prints per-frame timing with sub-phase breakdown (e.g. `bodies`, `stars`, `decon`, `mm`, `mui`):
+
+- Print every tick > 20 ms or work > 5 ms (individual STUTTER lines)
+- Print a once-per-second summary (fps, worst tick, worst work)
+
+When a single sub-phase column spikes while others stay flat, the stutter is localised — that's how `projectPoint` blocking was tracked down (bodies ballooned to 230 ms, everything else stayed under 1 ms, pointing straight at per-label projection).
+
+Recipe (macOS):
+```bash
+APP=$(find ~/Library/Developer/Xcode/DerivedData/<Project>-*/Build/Products/Debug/<Project>.app -maxdepth 0 | head -1)
+"$APP/Contents/MacOS/<Project>" -frameLog > /tmp/frame.log 2>&1 &
+sleep 10
+grep STUTTER /tmp/frame.log | head -20   # individual slow frames, with sub-phase breakdown
+grep summary  /tmp/frame.log | head -10   # once-per-second roll-up
+pkill -f "Contents/MacOS/<Project>"
+```
+
+Healthy output: `fps~60 worst-dt=16.8ms worst-work=3.3ms` per second.
+
+## Testing
+
+Pure-math helpers (scaling, Catmull-Rom sampling, Kepler solver, rotation math) belong in `internal static` (or `nonisolated`) functions taking explicit parameters. They run identically on iOS Simulator and macOS — and macOS is much faster for CI since there's no simulator boot.
+
+Test specifically:
+- Log distance monotonicity, moon compression formula, sqrt radius clamps/floors.
+- CatmullRom endpoint hits, interior uniform-u hits, two-point linearity, time-parameterised sampling, out-of-range clamping, degenerate-waypoint safety.
+- Mission rotation, anchor resolution, autoTimeScale preset snap, transfer-arc monotonic timeline.
+- Event fire-once + rewind reset (cursor must reset even when sim time is outside the active window, so jumping pre-launch still clears it).
+
+## Texture / data sources (public domain or CC-BY)
+
+For NASA/USGS textures and the HYG star catalogue, these sources have worked:
+
+- Earth: NASA Blue Marble Next Generation
+- Moon: NASA LRO Camera
+- Mars: USGS Viking MDIM21 via Wikimedia
+- Mercury / Venus / Uranus / Neptune: Solar System Scope (CC-BY 4.0)
+- Jupiter: NASA/JPL/SSI Cassini PIA07782
+- Saturn (+ rings): Cassini composite, Planet Pixel Emporium
+- Pluto: NASA/JHUAPL/SwRI New Horizons
+- Galilean moons: Voyager/Galileo composites (Steve Albers, Bjorn Jonsson)
+- Stars: HYG Database v38 (Hipparcos/Yale/Gliese, public domain)
+
+All NASA and USGS data is public domain (US government work). Cassini imagery is public domain via NASA/JPL/SSI. Solar System Scope textures are CC-BY 4.0 — credit them.
 
 ---
 
@@ -523,63 +890,6 @@ Real Time (Date)
 - **IAU rotation model**: Every body has sidereal rotation period, axial obliquity, and prime meridian at J2000.0. Tidally locked moons match their orbital period. Saturn's rings counter-rotate to cancel parent spin.
 - **Persisted settings**: Label toggles (planet/moon/star) and orbit visibility saved to UserDefaults.
 
-## Platform abstraction (iOS + macOS)
-
-The app is a single multi-platform target. 99% of the code is platform-neutral; the differences are funneled through one file and a handful of narrowly-scoped `#if` blocks.
-
-### `Extensions/Platform.swift`
-
-Defines the typealiases every other file references:
-
-| Typealias | iOS resolves to | macOS resolves to |
-|-----------|-----------------|-------------------|
-| `PlatformColor` | `UIColor` | `NSColor` |
-| `PlatformImage` | `UIImage` | `NSImage` |
-| `PlatformView` | `UIView` | `NSView` |
-| `PlatformViewRepresentable` | `UIViewRepresentable` | `NSViewRepresentable` |
-
-Plus `makePlatformImage(cgImage:size:)` and `cgImage(from:)` helpers for UIImage↔NSImage bridging where the construction differs.
-
-**Rule**: outside `Platform.swift` (and the gesture / animation-loop files flagged below), never write `UIColor`, `UIImage`, or UIKit/AppKit-typed names directly — use the `Platform…` aliases. The handful of files still using `#if canImport(UIKit)` are:
-
-- `SolarSystemSceneView.swift` — gesture recognisers (UIKit vs AppKit APIs diverge meaningfully)
-- `SolarSystemViewModel.swift` — frame-tick loop (CADisplayLink on iOS, Timer on macOS)
-- `TextureGenerator.swift` — procedural texture drawing via `CGContext` (cross-platform, so actually no `#if` needed here once UIGraphicsImageRenderer was replaced)
-- `ContentView.swift` + `CreditsView.swift` — SwiftUI modifiers that only exist on one platform (`.statusBarHidden`, `navigationBarTitleDisplayMode`, `topBarTrailing`)
-
-### Gesture map (macOS)
-
-| Input | Action | Implementation |
-|-------|--------|----------------|
-| Left-mouse drag | Pan (translate camera target) | `NSPanGestureRecognizer` with `buttonMask = 0x1` |
-| Right-mouse drag | Orbit (azimuth + elevation) | `NSPanGestureRecognizer` with `buttonMask = 0x2` |
-| Trackpad pinch | Zoom | `NSMagnificationGestureRecognizer` |
-| Scroll wheel / 2-finger scroll | Zoom | `ScrollZoomSCNView` subclass overrides `scrollWheel(with:)` |
-| Single click | Select body | `NSClickGestureRecognizer` (numberOfClicks = 1) |
-| Double click | Reset to overview | `NSClickGestureRecognizer` (numberOfClicks = 2) |
-
-The AppKit Y axis is inverted relative to UIKit, so the macOS pan / orbit handlers flip `dy` (`lastPanPoint.y - translation.y`) to keep the "drag up = look up" feel consistent with iOS. All the actual camera maths (`applyPan`, `applyOrbit`, `applyPinchZoom`) is shared between platforms.
-
-### Frame-tick loop
-
-`CADisplayLink` on both platforms — just constructed differently:
-
-- **iOS**: `CADisplayLink(target: self, selector: ...)` on the main run loop, display-synchronised 30–60 Hz.
-- **macOS 14+**: `scnView.displayLink(target: self, selector: ...)` — the NSView-bound form. Binds the link to whichever display the window is on so ticks stay synced to that screen's VBlank.
-
-Both feed the same `advanceOneFrame()` path. A brief early experiment with `Timer.scheduledTimer` on macOS produced visible ~1-per-second stutters because Timer's cadence drifts in and out of phase with the 60 Hz refresh — abandoned in favour of the real display link.
-
-Because the macOS display link needs an SCNView to bind to, `startAnimation()` may be called before the view connects (SwiftUI's `onAppear` can fire before `makeNSView` completes). The view model parks the request in `pendingAnimationStart` and the `cameraCoordinator.didSet` re-runs `startAnimation()` once the view arrives.
-
-### SCNVector3 component types
-
-`SCNVector3.x/y/z` is `Float` on iOS but `CGFloat` on macOS. Two helpers in `SCNVector3+Math.swift` hide the gap:
-
-- `SCNVector3(_ x: Double, _ y: Double, _ z: Double)` — build a vector from Double components.
-- `SCNVector3.adding(_ dx: Double, _ dy: Double, _ dz: Double) -> SCNVector3` — offset a vector by Double deltas, returning a new vector.
-
-Use these anywhere the existing code was doing `SCNVector3(x, y, z)` with Float arithmetic — they keep one-line call sites working on both platforms.
-
 ## Project Structure
 
 ```
@@ -589,6 +899,8 @@ SolarSystem/
 ├── README.md
 ├── architecture.html
 ├── tutorial.html
+├── run-macos.sh                       # macOS Release build → /Applications → launch
+├── run_phone.sh                       # iPhone build (signed) → install → launch
 ├── SolarSystemTests/
 │   ├── ScalingTests.swift            # Log distance, sqrt radius, moon compression (91 lines)
 │   ├── CatmullRomTests.swift         # Centripetal curve endpoints, time sampling (98 lines)
@@ -690,38 +1002,13 @@ SolarSystem/
 | Callisto | Voyager/Galileo, Bjorn Jonsson | Public domain data |
 | Stars | HYG Database v38 (Hipparcos/Yale/Gliese) | Public domain |
 
-## Orbital Mechanics
+## Project-Specific Implementation Notes
+
+The general orbital-mechanics pipeline, IAU rotation model, scaling formulas, mission/trajectory architecture, camera framing math, and SceneKit gotchas all live in the `astro` skill. This section just records the SolarSystem-specific glue.
 
 ### Shared astronomical constants
 
-`OrbitalMechanics.j2000` (2451545.0) and `OrbitalMechanics.kmPerAU` (149,597,870.7) are the single source of truth for every date-to-epoch and AU-to-km conversion in the app. If you need either value elsewhere, reference the constant rather than inlining the literal — that way changes (e.g. the IAU revising the AU definition) propagate everywhere. Earth's radius in km is likewise referenced from `SolarSystemData.earth.physical.radiusKm` rather than hardcoded in mission compression maths.
-
-### Calculation Pipeline
-
-1. `julianDate(from: Date) -> Double` — Meeus algorithm, Gregorian to JD
-2. `julianCenturies(from: Date) -> Double` — `(JD - 2451545.0) / 36525.0`
-3. `elements.elements(at: T) -> CurrentElements` — Base + rate * T
-4. `meanAnomaly = L - wBar` (normalised to [0, 2pi))
-5. `solveKepler(M, e) -> E` — Newton-Raphson, initial guess `E0 = M + e*sin(M)`, tolerance 1e-8, max 50 iterations
-6. `trueAnomaly(E, e) -> nu` — `2*atan2(sqrt(1+e)*sin(E/2), sqrt(1-e)*cos(E/2))`
-7. `r = a * (1 - e*cos(E))` — heliocentric distance
-8. Rotate by omega, I, w to ecliptic (x,y,z)
-
-### Moon Positions
-
-Simplified circular orbits with period-based mean motion: `M = longitudeAtEpoch + (2pi/period) * daysSinceJ2000`.
-
-### IAU Rotation
-
-Each body has `RotationProperties(periodHours, obliquity, w0, tidallyLocked)`. Applied per frame using quaternion composition: `tiltQuat * spinQuat` where tilt is around the X axis (fixed in space) and spin is around Y (the tilted pole). Euler angles can't do this correctly — SceneKit applies them in Y-X-Z order, causing the tilt axis to wobble with each spin cycle. Saturn's rings cancel the spin quaternion in local frame to stay fixed in the equatorial plane.
-
-### Coordinate System
-
-- **Orbital mechanics**: Heliocentric ecliptic (x,y in ecliptic plane, z perpendicular)
-- **SceneKit**: x = ecliptic x, y = ecliptic z (up), z = -ecliptic y
-- **Distance**: `log(1 + AU/0.5) * 15` scene units
-
-## Rendering
+`OrbitalMechanics.j2000` (2451545.0) and `OrbitalMechanics.kmPerAU` (149,597,870.7) are the single source of truth for every date-to-epoch and AU-to-km conversion in the app. Earth's radius in km is referenced from `SolarSystemData.earth.physical.radiusKm` rather than hardcoded in mission compression maths.
 
 ### Scene Graph
 
@@ -739,36 +1026,11 @@ SCNScene (black background)
 ├── [Planet] (PBR, NASA texture, IAU rotation)
 │   ├── [Saturn Rings] (custom disc, radial UVs, Cassini textures, counter-rotated)
 │   └── [Orbit Path] (line geometry, 180 segments)
-└── [Moon] (PBR, texture or colour, tidally locked rotation)
+├── [Moon] (PBR, texture or colour, tidally locked rotation)
+└── mission_<id> (SCNNode group, positioned at Earth or origin)
+    ├── trajectory_line                              # SCNGeometryElement .line + per-vertex colours
+    └── vehicle_marker                               # emissive SCNSphere + additive halo child
 ```
-
-### Star Rendering
-
-- 8,920 stars parsed from bundled `stars.csv` (HYG v38)
-- RA/Dec mapped to celestial sphere at r=500
-- 4 brightness tiers with different point sizes (mag < 1.5: 3-8px, mag 5-6.5: 0.8-2px)
-- Per-vertex B-V colour (blue-white O/B → white A → yellow G → orange K → red M)
-- ~120 brightest named stars labelled (Sirius, Vega, Betelgeuse, etc.)
-- Star labels occluded behind planet screen discs
-
-### Saturn's Rings
-
-Custom flat disc geometry with radial UV mapping:
-- 72 radial segments x 4 ring segments
-- `u` maps 0 (inner) to 1 (outer) — radially across the ring strip texture
-- Cassini colour map + alpha transparency for ring density
-- `lightingModel = .constant` for visibility
-- Counter-rotated each frame to cancel parent planet's spin
-
-## Missions
-
-Ported from the web app (see `../solarsystem-web/MISSIONS.md` for the full specification shared between ports). All 11 missions (Artemis II, Apollo 8, Apollo 11, Apollo 13, Cassini-Huygens, Voyager 1, Voyager 2, Perseverance, New Horizons, Parker Solar Probe, BepiColombo) ship as of Phase 3.
-
-### Where the data lives
-
-The waypoint data is a one-shot export from `../solarsystem-web/js/missions.js`. Run `node tools/export-missions.mjs` whenever upstream waypoints change; the script evaluates the data-declaration portion of missions.js (everything before `class MissionManager`) in a sandboxed Node context with stubbed imports and writes `SolarSystem/Resources/Missions.json`.
-
-App startup decodes the JSON through a `MissionJSON` DTO layer (in `MissionData.swift`) that converts to the domain `Mission` / `Vehicle` / `Waypoint` structs. The DTO layer isolates Swift's Codable from the ergonomic domain types — the domain types keep their custom initialisers and convenience computed properties, while the DTO tracks whatever shape the JSON happens to have.
 
 ### Missions in the bundle
 
@@ -786,22 +1048,11 @@ App startup decodes the JSON through a `MissionJSON` DTO layer (in `MissionData.
 | Parker Solar Probe | Heliocentric | Parker | ~43,800 h | Multi-loop Venus-assist solar approach |
 | BepiColombo | Heliocentric | BepiColombo | ~52k h | Mercury orbiter |
 
-### Architecture
+### Where the mission data lives
 
-```
-Missions.json (bundled resource, exported from web JS)
-    -> MissionData.all (JSON → DTO → domain)
-    -> MissionManager.initialize(in: scene)
-        -> per mission: anchor waypoints resolve, Moon-aligned → ecliptic rotation
-            -> centripetal CatmullRom sampling (400 pts for primary, ≥40 * N for others)
-                -> trajectory line (SCNGeometryElement .line, per-vertex colour gradient)
-                -> vehicle marker (nested emissive SCNSphere + additive halo)
-            -> ready
-    -> MissionManager.update(simulatedDate, earthHelioPos, cameraNode) each frame
-        -> group.position = earthScenePos (geocentric) or zero (heliocentric)
-        -> per vehicle: interpolate CatmullRom OR moonOrbit cos/sin OR moonLanding snap
-        -> scale marker by camera distance (max(0.04, camDist * 0.012))
-```
+The waypoint data is a one-shot export from `../solarsystem-web/js/missions.js`. Run `node tools/export-missions.mjs` whenever upstream waypoints change; the script evaluates the data-declaration portion of missions.js (everything before `class MissionManager`) in a sandboxed Node context with stubbed imports and writes `SolarSystem/Resources/Missions.json`.
+
+App startup decodes the JSON through a `MissionJSON` DTO layer (in `MissionData.swift`) that converts to the domain `Mission` / `Vehicle` / `Waypoint` structs. The DTO layer isolates Swift's Codable from the ergonomic domain types — the domain types keep their custom initialisers and convenience computed properties, while the DTO tracks whatever shape the JSON happens to have.
 
 ### Mission data shape (Swift structs)
 
@@ -813,32 +1064,6 @@ Missions.json (bundled resource, exported from web JS)
 | `MissionEvent` | t, name, detail, showLabel | `showLabel: false` for Earth-surface events (Launch, MECO, splashdown) |
 | `MoonOrbitPhase` | startTime, endTime, periodHours, radiusKm | Runtime circular orbit around the Moon's scene position |
 | `MoonLandingPhase` | startTime, endTime | Marker snaps to Moon scene position throughout window |
-
-### Coordinate handling
-
-- **Geocentric waypoints** (Apollo, Artemis) are km in a Moon-aligned frame (X toward Moon at `flybyTimeHours`). At init, rotated by `atan2(moonPos.y, moonPos.x)` to ecliptic. `anchorMoon: true` replaces a waypoint with the Moon's actual ecliptic direction × semi-major-axis distance (so the line meets the rendered Moon).
-- **Heliocentric waypoints** (Voyager, Cassini, etc.) are AU in ecliptic coordinates. `anchorBody: "planet_id"` replaces the waypoint with that planet's `OrbitalMechanics.heliocentricPosition(...)` at time `t`.
-- **`autoTrajectory: "transfer"`** (Perseverance) expands 2–3 anchor waypoints into an elliptical arc via `MissionManager.generateTransferArc(_:)`. Prograde (CCW) sweep between anchor angles, linear radius interpolation with a sin(π·frac) outward bulge, 12 intermediate samples per segment. Runs after anchor resolution so the arc connects real planet positions.
-- Geocentric scene conversion: `earthSceneR * pow(distKm / 6371, moonDistExponent) * moonDistScale` — same compression as moon positioning.
-- Heliocentric scene conversion: `SceneBuilder.sceneDistance(au:)` — same log formula as planet positioning.
-
-### Runtime phases (geocentric only)
-
-Each frame, for a vehicle with any moon-phase property, the marker position is computed from the Moon's *current* scene position rather than by interpolating waypoints. This keeps the vehicle glued to the rendered Moon mesh:
-
-1. **moonOrbit**: `phase = (t - start) / period * 2π`, position = moonScenePos + tangent·cos·r + normal·sin·r where tangent/normal are perpendicular to the Earth-Moon line. Orbit radius is the scene distance of `(sma + radiusKm)` minus the scene distance of `sma` — shrinks proportionally with the pow(0.6) compression.
-2. **moonLanding**: marker snaps to moonScenePos for the entire window.
-3. **moonOrbitReturn**: same as moonOrbit but in a distinct time window (post-landing ascent).
-
-### Scene graph
-
-```
-SCNScene
-├── [planets, moons, stars, orbits, sun]            (unchanged)
-└── mission_<id> (SCNNode group, positioned at Earth or origin)
-    ├── trajectory_line                              # SCNGeometryElement .line + per-vertex colours
-    └── vehicle_marker                               # emissive SCNSphere + additive halo child
-```
 
 ### Telemetry
 
@@ -857,31 +1082,11 @@ SCNScene
 | `MissionTelemetryPanel` | Above timeline slider, left-aligned | MET / distance (km or AU) / speed for the primary vehicle |
 | `MissionEventBannerView` | Top-centre overlay (below the date bar) | 4-second slide-down banner triggered by `checkEventTrigger`. Placed top-centre so it doesn't occlude the vehicle marker, Moon, or trajectory arc as events fire. |
 | Event labels (3D) | SwiftUI overlay, projected from trajectory | Visible within ±3% of mission duration around each event (clamped 1–500h) |
-| Satellites menu | Toolbar (`antenna.radiowaves.left.and.right` icon) | ISS on/off toggle (`showISS`, persisted) |
+| ISS toggle | Toolbar (`antenna.radiowaves.left.and.right` icon, direct button) | One-tap on/off for the ISS model (`showISS`, persisted). Originally wrapped in a single-item `Menu`; collapsed to a plain `Button` since there's no second satellite to add yet. |
 
 View-model state powering them: `activeMissionId`, `missionTelemetry`, `missionElapsedHours`, `currentEventBanner`, `timelineScrubbing` (flipping this pauses playback and restores prior pause state on release), `lazyFollowActive` (per-frame target lerp toward Earth + trajectory centre). End-of-mission speed-reset fires once when elapsed crosses `durationHours` with `timeScale > 1`, so the simulation doesn't race past splashdown.
 
 **Toolbar icon philosophy**: SF Symbols first, procedural SwiftUI `Canvas` second, bundled assets never. The missions dropdown uses `RocketIcon` (a `Canvas` with three `Path`s for fuselage, fins, flame) because there's no SF rocket glyph — see `MissionUIViews.swift`. This keeps the "pure Apple frameworks, zero dependencies" rule intact and avoids asset-catalogue bookkeeping for what's effectively a 40-line vector drawing.
-
-### Planet preset focus
-
-Same maths as the mission camera, just triggered by the globe-menu planet picks or the `-focus <body>` launch arg. Computed in `SolarSystemViewModel.focusCamera(on:)`:
-
-- **Distance**: `extent × baseMultiplier × (0.5 + 0.5 × min(aspect, 1))`, where `baseMultiplier` is `0.8` for moon-hosting bodies (Earth, Mars, Jupiter, Saturn) and `6.0` for moonless ones (Mercury, Venus, Uranus, Neptune, Pluto, Sun). The aspect-scaled portrait factor tightens the frame on phones where the constraining dimension (width) is much smaller than landscape.
-- **Azimuth**: `atan2(-pos.x, -pos.z) + 0.55` radians — camera sits on the Sun-facing side of the target (~31° off the Sun direction) for a two-thirds-lit view. Elevation fixed at 0.3 rad (~17°).
-
-Exactly matches the web app's `focusCamera` function (`../solarsystem-web/js/main.js:465`), so the two ports frame planet picks identically.
-
-### Lazy-follow mission camera
-
-Geocentric missions (Apollo, Artemis) auto-frame on selection:
-
-1. `MissionManager.missionBounds(missionId:)` returns the trajectory's local AABB (Earth-relative) for geocentric missions, or `nil` for heliocentric ones — those bypass framing entirely and use `resetToOverview` instead.
-2. `applyMissionCameraFraming(for:)` computes a Sun-side azimuth `atan2(-earthX, -earthZ) + 0.55 rad` — the negated arguments place the camera between the Sun (at the scene origin) and Earth so Earth's day side faces the camera, with the 0.55 rad offset putting the terminator on the far side for a two-thirds-lit view. Elevation is 0.3 rad (~17°), and distance = `radius / tan(30°) × 1.4` to fit the trajectory's local radius into a portrait viewport.
-3. Per-frame `stepLazyFollowCamera()` lerps the camera target toward `earthScenePos + localCenter` at `0.02/frame` so the trajectory stays centred as Earth drifts through its orbit.
-4. `Coordinator.userInteractionHandler` fires on pan/orbit/pinch `.began` and the view model clears `lazyFollowActive` — the user gets full manual control the moment they touch the screen.
-
-Heliocentric missions (Voyager, Cassini, …) call `resetToOverview` instead — the standard solar system view shows the trajectory cleanly across the full system.
 
 ### 3D event labels
 
@@ -928,11 +1133,14 @@ Horizontal custom drag-gesture control above the toolbar. Logarithmically mapped
 | Control | Icon | Action |
 |---------|------|--------|
 | Play/Pause | play/pause.fill | Toggle simulation |
-| Speed menu | gauge | 0.1x to 1Mx, reverse, Reset to Now |
+| Speed menu | gauge | 0.1x to 1Mx, reverse, Reset to Now (label is a single-line `Text` with `.lineLimit(1)` + `.fixedSize(horizontal: true, …)` so wide values like `"100,000x"` don't wrap into a vertical column) |
 | Orbits | circle.circle | Toggle orbital paths |
 | Labels menu | tag | Planets / Moons / Stars (independent toggles) |
+| ISS | antenna.radiowaves.left.and.right | One-tap toggle for the ISS model |
+| Missions | procedural `RocketIcon` | Pick a mission to replay, or stop the current one |
 | Planet picker | globe | Jump to any body or overview |
 | Home | house.fill | Reset to overview |
+| Credits | info.circle | About / texture and data attributions |
 
 ### Persisted Settings (UserDefaults)
 
@@ -953,7 +1161,7 @@ Horizontal custom drag-gesture control above the toolbar. Logarithmically mapped
 | `-showOrbits` / `-hideOrbits` | flag | Toggle orbits |
 | `-showLabels` / `-hideLabels` | flag | Toggle all labels |
 | `-logPositions` | flag | Log heliocentric positions |
-| `-frameLog` | flag | Print frame-timing diagnostics: any tick > 20 ms or work > 5 ms, plus a once-per-second summary (fps, worst tick, worst work). Phases covered: `bodies`, `stars`, `decon`, `mm` (mission update), `mui` (mission UI). Used to track down the macOS `projectPoint` stutter — see the Performance Debugging section below. |
+| `-frameLog` | flag | Print frame-timing diagnostics: any tick > 20 ms or work > 5 ms, plus a once-per-second summary (fps, worst tick, worst work). Phases covered: `bodies`, `stars`, `decon`, `mm` (mission update), `mui` (mission UI). Used to track down the macOS `projectPoint` stutter — see the Performance Debugging section in the `astro` skill. |
 | `-innerOnly` | flag | Mercury–Mars only |
 
 ## Testing
@@ -993,13 +1201,33 @@ xcrun simctl launch booted com.pwilliams.SolarSystem -- -mission apollo11 -focus
 
 ### Device
 
+Use the bundled `run_phone.sh` for the build → install → launch flow:
+
+```bash
+./run_phone.sh                                 # plain launch
+./run_phone.sh -mission apollo11 -focus earth  # forward launch-args
+./run_phone.sh -showISS -frameLog              # ISS visible + frame timing
+```
+
+It reads `APPLE_TEAM_ID`, `IPHONE_UDID`, and `IPHONE_BUILD_ID` from
+`~/appledev/setupenv.sh` (with the fail-loud `${VAR:?}` guard pattern), builds
+for the device with `-destination "id=$IPHONE_BUILD_ID" -allowProvisioningUpdates
+DEVELOPMENT_TEAM=$APPLE_TEAM_ID`, installs via `devicectl`, and launches with
+any trailing arguments forwarded to the app's `parseLaunchArguments()`.
+
+If you need to invoke `xcodebuild` manually, use this exact form — the bare
+`-destination "platform=iOS,name=…"` form silently produces an *unsigned*
+`.app` on this project, which then fails to install with `No code signature
+found`:
+
 ```bash
 xcodebuild -project SolarSystem.xcodeproj -scheme SolarSystem \
-  -destination "platform=iOS,name=Paul's iPhone 16 Pro" build
+  -destination "id=$IPHONE_BUILD_ID" -allowProvisioningUpdates \
+  DEVELOPMENT_TEAM="$APPLE_TEAM_ID" build
 
 APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData/SolarSystem-*/Build/Products/Debug-iphoneos/SolarSystem.app -maxdepth 0)
-xcrun devicectl device install app --device 970899A3-153F-5EC2-834F-BAFFCDF2560B "$APP_PATH"
-xcrun devicectl device process launch --device 970899A3-153F-5EC2-834F-BAFFCDF2560B com.pwilliams.SolarSystem
+xcrun devicectl device install app --device "$IPHONE_UDID" "$APP_PATH"
+xcrun devicectl device process launch --device "$IPHONE_UDID" com.pwilliams.SolarSystem
 ```
 
 ### macOS (Debug from DerivedData)
@@ -1040,51 +1268,6 @@ xcodebuild -project SolarSystem.xcodeproj -scheme SolarSystem \
   CODE_SIGNING_ALLOWED=NO 2>&1 | tail -5
 ```
 
-## Performance Debugging
-
-The `-frameLog` launch arg prints per-frame timing so regressions show up immediately. Recipe:
-
-```bash
-APP=$(find ~/Library/Developer/Xcode/DerivedData/SolarSystem-*/Build/Products/Debug/SolarSystem.app -maxdepth 0 | head -1)
-"$APP/Contents/MacOS/SolarSystem" -focus earth -showISS -timeScale 10000 -frameLog > /tmp/frame.log 2>&1 &
-sleep 10
-grep STUTTER /tmp/frame.log | head -20   # individual slow frames, with sub-phase breakdown
-grep summary /tmp/frame.log | head -10   # once-per-second fps/worst-work roll-up
-pkill -f Contents/MacOS/SolarSystem
-```
-
-Example healthy output: `fps~60 worst-dt=16.8ms worst-work=3.3ms` per second.
-
-The sub-phase columns (`bodies`, `stars`, `decon`, `mm`, `mui`) correspond to the five big blocks inside `updatePositions`. If one column spikes while others stay flat, the stutter is localised to that phase — that's how the `projectPoint` blocking was tracked down in April 2026 (bodies ballooned to 230 ms, everything else stayed under 1 ms, pointing straight at the per-label projection calls in the body loop).
-
-### Matrix-based label projection
-
-`SCNView.projectPoint` on macOS blocks the main thread by synchronising with the render thread — about 16.7 ms (one 60 Hz frame) per call during heavy scene activity. We bypass it: `refreshProjectionCache()` builds the view × projection matrix once per frame as a `simd_float4x4`, and `projectToSwiftUIPoint(_:in:)` does the world-to-clip-to-screen maths with pure SIMD arithmetic (sub-millisecond for all 26 bodies combined). Output is already in SwiftUI top-left-origin coords so no per-platform Y flip is needed. Same code path runs on iOS, where it happens to also be ~100× faster than `projectPoint`.
-
-The **projection matrix is constructed from first principles** (camera `fieldOfView` + live `view.bounds` aspect) rather than read from `camera.projectionTransform`. The latter returns a matrix whose `[0][0]` aspect term didn't match the current viewport on macOS, so labels drifted horizontally away from their bodies. Building the matrix ourselves also correctly handles `SCNCameraProjectionDirection.horizontal` (macOS default) vs `.vertical` (iOS default) — the two branches differ in which axis gets the `1/tan(fov/2)` term raw and which gets it multiplied by aspect.
-
-```
-horizontal FOV:   xScale = f,         yScale = f * aspect
-vertical FOV:     xScale = f / aspect, yScale = f
-where f = 1 / tan(fov/2)
-```
-
-Heads-up: `SCNCameraProjectionDirection` only has `.horizontal` and `.vertical` cases — there is **no `.automatic` case** despite the common assumption.
-
-### Label placement (on-screen-radius offsets)
-
-Labels are offset above each body by the body's actual on-screen radius plus a 4 pt margin — so at every zoom level the label sits just above the disc rather than overlapping it. The screen radius is computed from the same cached projection matrix:
-
-```
-cachedPixelsPerUnit = yScale * (viewportHeight / 2)   // cached per frame
-screenR = worldRadius * cachedPixelsPerUnit / clip.w  // per-body
-offsetY = max(8, screenR + 4)
-```
-
-`cachedPixelsPerUnit` is derived from the projection matrix itself, not an empirical constant. The 8 pt floor handles nodes without `SCNSphere` geometry (stars, the procedural ISS model) — they still get a readable gap even though their world radius is nominally zero. A previous version used an ad-hoc `r / w * 300` formula that undershot by 3–4× on widescreen Mac windows, which was why the labels always landed inside the planet disc.
-
-The matrix maths and helpers live in `SolarSystemViewModel` near the `projectLabel` helper. If you need to project from elsewhere, call `refreshProjectionCache()` first.
-
 ## Frameworks Used
 
 - **SwiftUI** — UI layer, gesture state, overlay labels, zoom slider
@@ -1093,42 +1276,23 @@ The matrix maths and helpers live in `SolarSystemViewModel` near the `projectLab
 - **Foundation** — Date/calendar, ISO8601DateFormatter, ProcessInfo, UserDefaults
 - **simd** — SIMD3<Double> vectors, simd_length
 
-## Known Gotchas
+## Project-Specific Gotchas
 
-### Orbital Mechanics
-- **Kepler divergence**: For e > 0.9, use `E0 = M + e*sin(M)` as initial guess
-- **Angle wrapping**: Normalise to [0, 2pi) via `truncatingRemainder`
-- **Julian date precision**: Use `Double` — `Float` lacks precision
+The general SceneKit gotchas (`allowsCameraControl`, `SCNText` scaling, `projectPoint` blocking on macOS, `projectionTransform` aspect bug, no `.automatic` projection direction, line index pairing, ring UV mapping, depth-buffer rules for trajectories), the orbital-mechanics gotchas (Kepler divergence, angle wrapping, Julian-date precision, IAU rotation via quaternion composition), and the multi-platform gotchas (`Platform.swift` typealiases, frame-tick loop, AppKit Y inversion, `SCNVector3` component types) all live in the `astro` and `macos` skills. This section just records what's specific to SolarSystem.
 
-### SceneKit
-- **Camera controller conflict**: `allowsCameraControl` overrides programmatic changes. Must disable entirely and implement custom gestures.
-- **SCNTube UV mapping**: Caps map linearly, not radially. Saturn rings need custom disc geometry.
-- **SCNText scaling**: Can't maintain constant screen size. Use SwiftUI overlay with `projectPoint()`.
-
-### Performance
-- **SwiftUI label overhead**: 100+ labels re-rendered via `@Published` every frame kills performance. Throttle to every 3rd frame.
-- **Zoom slider**: Hide labels during drag gesture to prevent frame drops.
-- **Star occlusion**: O(stars × bodies) per frame — keep named star count reasonable (~120).
-
-### Camera
+### Camera plumbing
 - **Deferred coordinator**: `cameraCoordinator` is nil during `init()`. Use `pendingFocus` with `didSet`.
 - **Focus-at-wrong-time**: `pendingFocus` must run `updatePositions(projectLabels: false)` *before* calling `focusOnBody`, otherwise focus maths read each node's default origin position (because nodes haven't been positioned for the current simulated date yet) and the camera ends up pointed at the Sun. Fixed by calling updatePositions inside the `cameraCoordinator.didSet`.
+- **`pendingMissionFraming`**: When `-mission` is set at init and the camera coordinator hasn't connected yet, the framing request is parked and applied in `cameraCoordinator.didSet`. Analogous to `pendingFocus`.
 - **Vertical pan direction**: Screen Y is inverted relative to world up. Fixed by flipping `dy * up`.
 - **Saturn ring spin**: Rings are child nodes — cancel spin quaternion in local frame each frame.
-- **Euler angle wobble**: `eulerAngles = (tilt, spin, 0)` causes axial tilt to rotate with spin because SceneKit applies Y-X-Z order. Use quaternion composition instead: `tiltQuat * spinQuat`.
 - **Zoom range consistency**: All zoom controls (slider, pinch, presets, `updateCamera`, `setDistance`) must clamp to the same range (0.5–250). Mismatched minimums cause the slider to snap when switching between manual zoom and presets.
 
-### Missions
+### Missions (project-specific)
 - **Main-actor isolation for pure math**: `SceneBuilder` is `@MainActor`, so static scaling helpers used by `MissionManager` + tests need explicit `nonisolated` annotation. Same for `MissionManager.resolveAndRotateWaypointsForTesting` and `Mission.autoTimeScale`.
-- **Moon-relative semi-major axis**: `moonOrbit`/`moonLanding` must use `moonElements.semiMajorAxisKm` (matching how the Moon mesh is rendered), not `simd_length(moonPosition(...))` which fluctuates ±21,000 km due to eccentricity and makes vehicles miss the Moon.
-- **anchorMoon scale factor**: Rescale the unit ecliptic direction by the semi-major axis in km, not by the raw `moonPosition()` magnitude — otherwise the waypoint lands at the Moon's actual eccentric distance instead of its rendered position.
-- **Event rewind past launch**: The rewind-reset check in `checkEventTrigger` must run before the "outside active window" continue, otherwise jumping far before launch never clears the cursor and Launch can't replay.
-- **CatmullRom knot clamp**: Minimum knot delta (1e-8) prevents division-by-zero when two adjacent waypoints coincide (can happen with `anchorMoon` waypoints at similar times).
-- **Line primitive indexing**: `SCNGeometryElement(primitiveType: .line, ...)` takes *pairs* of indices, not a line-strip array. Build `[0,1, 1,2, 2,3, …]` for a connected polyline.
 - **Auto-speed overrides -timeScale**: Setting `activeMissionId` calls `autoTimeScale()` and overwrites whatever the user supplied via `-timeScale`. Intentional — the mission auto-speed targets ~45s replay.
 - **JSON export workflow**: `tools/export-missions.mjs` reads `../solarsystem-web/js/missions.js`, slices off everything from `class MissionManager` onward, stubs the imports, and evaluates the data declarations in a Node vm context. Re-run whenever upstream waypoints change; check `Missions.json` into git as the bundled source of truth.
 - **DTO vs domain types**: `MissionJSON` in `MissionData.swift` exists only for Decodable conformance; the domain `Mission` / `Vehicle` / `Waypoint` types stay free of Codable boilerplate so they can keep ergonomic custom initialisers. Add new JSON fields to the DTO first, then map in `toDomain()`.
-- **autoTrajectory runs after anchor resolution**: The transfer-arc generator expects waypoint x/y/z to already be resolved to real planet positions, not anchor sentinels. Order in `buildVehicle` is: resolve anchors → rotate (geocentric only) → transfer arc → CatmullRom sample.
 - **Telemetry / banner throttle**: `updateMissionUIState()` runs every 3rd frame (same cadence as label projection) so the publisher doesn't fire at 60 Hz for identical values. If a test needs immediate state, call `seekMission(toElapsedHours:)` which runs a synchronous single-frame update.
 - **Timeline scrub pauses playback**: `timelineScrubbing.didSet` flips `isPaused` (restoring the prior value on release) so the display link doesn't advance simulation time while the user drags. Without this, the slider thumb fights the view model's auto-sync.
 - **Banner animation re-fires on identical names**: `MissionEventBanner.id` is a `UUID()` rather than the event name, so SwiftUI treats each firing as a distinct identity and re-runs the slide-in transition. Without this, a rewind + replay past the same event would show no animation.
@@ -1138,23 +1302,21 @@ The matrix maths and helpers live in `SolarSystemViewModel` near the `projectLab
 ### ISS / Satellites
 - **ISS as a moon, gated by a toggle**: Added to Earth's `moons` array so the existing moon-positioning, label projection, and rotation pipelines apply for free. Hidden by default via `showISS` UserDefaults. The label projection path explicitly skips ISS when `!showISS` — otherwise the "ISS" text would float next to Earth with no geometry beneath it.
 - **Procedural geometry, not a sphere**: `SceneBuilder.createBodyNode(for:)` special-cases `body.id == "iss"` and returns the truss+panels+radiators group. The moon sphere isn't created at all, so nothing to hide beyond the group itself.
+- **UI: direct toggle, not a menu**: The toolbar's antenna icon is a plain `Button { showISS.toggle() }`, not a `Menu` wrapping a single item. The original Menu form was a placeholder for future Hubble / JWST entries; until those exist, a one-tap toggle is the right shape and matches the orbits-toggle pattern next to it.
 
-### Lazy-follow mission camera
+### Toolbar reliability (ControlsBarView)
+- **Toolbar is an `Equatable` subview, not a computed property of `ContentView`**: `ContentView.body` re-evaluates ~20 Hz while time is ticking because `viewModel.currentDate` and `viewModel.screenLabels` republish on every 3rd frame. With the toolbar inline (the original `controlsBar` computed property) the entire HStack — including all five `Menu`s — was reconstructed at 20 Hz, which made popovers tear down mid-tap, items occasionally fail to register, and dropdowns clip mid-render. Fixed by extracting `ControlsBarView: View, Equatable` with explicit `@Binding`s for the toolbar's actual reads (`isPaused`, `timeScale`, `showOrbits`, label toggles, `showISS`, `activeMissionId`) and closures for actions. SwiftUI uses our custom `==` to skip body evaluation whenever no toolbar-relevant value changed.
+- **`MissionsMenu` takes bindings, not the view model**: Same isolation principle — observing `@ObservedObject var viewModel` in a `Menu`-bearing subview reintroduces the 20 Hz rebuild. `MissionsMenu` now takes `@Binding activeMissionId`, `let missions`, and an `onCancel: () -> Void`.
+- **Speed-menu label needs `.lineLimit(1)` + `.fixedSize(horizontal: true, vertical: false)`**: Without these, `Text(formatTimeScale(timeScale))` wraps vertically (one character per row) for wider values like `"100,000x"` or `"-100,000x"`, growing the toolbar's height. The fix pins the Text to its natural intrinsic width on a single line; the surrounding HStack has plenty of horizontal room thanks to the `Spacer()`.
+
+### Lazy-follow mission camera (project-specific)
 - **Framing depends on up-to-date node positions**: `applyMissionCameraFraming(for:)` calls `updatePositions(projectLabels: false)` once before reading `earthNode.position`, same pattern as `pendingFocus` — without it, Earth is at (0,0,0) and the framing lands at the Sun.
-- **Azimuth uses Earth's x/z, not x/y**: In SceneKit's coordinate system (scene y = ecliptic z), Earth's "horizontal" position is (x, z). Using (x, y) would pick a vertical offset instead and place the camera below the ecliptic plane.
 - **User-break runs on `.began`, not `.changed`**: Firing on every gesture delta would spam the handler. Firing on `.began` once is enough — the view model clears `lazyFollowActive` and stops stepping the lerp for the rest of the session.
-- **Heliocentric missions bypass framing**: Interplanetary trajectories span AU; framing them tight around a local centre breaks because the trajectory overlaps the Sun. The code falls through to `resetToOverview` for heliocentric missions.
-- **`pendingMissionFraming`**: When `-mission` is set at init and the camera coordinator hasn't connected yet, the framing request is parked and applied in `cameraCoordinator.didSet`. Analogous to `pendingFocus`.
-- **Sun-side azimuth sign flip**: The camera's spherical offset is measured *from* the target, so the direction pointing at the Sun (at scene origin) is `-earthPos / |earthPos|`. Using `atan2(-x, -z)` (both negated) puts the camera on the Sun side; using `atan2(x, z)` places it on the anti-Sun side and the target renders unlit. Applies to both `focusCamera(on:)` and `applyMissionCameraFraming(for:)`.
-- **Trajectory lines bypass depth**: Mission trajectory lines set both `writesToDepthBuffer = false` and `readsFromDepthBuffer = false`, so the full arc is visible even behind the Moon/planets. Without `readsFromDepthBuffer = false` the behind-Moon half of an Artemis / Apollo flyby disappears into the Moon mesh and the trajectory appears to terminate at the lunar horizon.
-- **`SCNView.projectPoint` blocks the render thread on macOS**: At high time-scales with rapidly-changing scene content (e.g. 10,000× + ISS), each call waits ~16.7 ms (one 60 Hz frame) for a render-thread sync. With 26 bodies projected per UI-update frame that's a 230–280 ms stutter every ~1 s. Fixed by caching the view × projection matrix once per frame (`refreshProjectionCache()`) and computing screen coordinates manually via SIMD — sub-millisecond total per frame, no sync. Run with `-frameLog` to print per-frame phase timings if similar issues recur.
-- **`camera.projectionTransform` has the wrong aspect on macOS**: The property returns a matrix whose `[0][0]` term doesn't track the live viewport size, causing labels to drift horizontally from their bodies (vertical tracking stays fine because `[1][1]` doesn't depend on aspect). Fixed by constructing the projection matrix ourselves from `camera.fieldOfView` + `view.bounds` aspect each frame. Don't read `projectionTransform` directly in render-critical code paths.
-- **`SCNCameraProjectionDirection` has no `.automatic` case**: Only `.horizontal` and `.vertical`. macOS defaults to `.horizontal`, iOS to `.vertical`. When constructing your own projection matrix the two require different `xScale`/`yScale` formulas (see the *Matrix-based label projection* section) — applying the wrong one stretches one axis.
-- **Label screen-radius needs the real projection factor**: A rough `r / clip.w * 300` formula undershoots on widescreen Mac windows by 3–4×, so labels offset by that amount still land inside the planet disc. The correct factor is `yScale × (viewportHeight / 2)`, where `yScale` comes from the same projection matrix you're rendering with. Cached once per frame as `cachedPixelsPerUnit`.
 
-### 3D event labels
-- **Label positions are computed once, positioned per frame**: `eventLabelLocalPositions` returns trajectory-local positions cached at mission selection. Each frame the current Earth scene position is added on top so the label moves with Earth's heliocentric drift. Re-projecting every frame would cost far more than it gains.
-- **Window clamp**: A ±3% window on a 195-hour Apollo 11 mission gives ~6h of screen time (at 10,000× replay ≈ 2 real seconds). The 500-hour upper clamp prevents Voyager-length missions from producing weeks-long visibility windows where every label shows throughout the replay.
+### Performance (project-specific tuning)
+- **SwiftUI label overhead**: 100+ labels re-rendered via `@Published` every frame kills performance. Throttle to every 3rd frame.
+- **Zoom slider**: Hide labels during drag gesture to prevent frame drops.
+- **Star occlusion**: O(stars × bodies) per frame — keep named star count reasonable (~120).
 
 ## Future Roadmap
 

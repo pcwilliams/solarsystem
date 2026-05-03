@@ -422,6 +422,39 @@
         </p>
     </div>
 
+    <!-- View-Layer Isolation -->
+    <div class="diagram-section">
+        <h2>Toolbar Isolation (Menu Reliability)</h2>
+
+        <p>
+            The view model publishes <code>currentDate</code> and <code>screenLabels</code> every third frame (~20&nbsp;Hz at 60&nbsp;fps) so the date display and overlay labels stay fresh. Because <code>ContentView</code> observes the view model via <code>@StateObject</code>, every <code>@Published</code> change invalidates <code>body</code>. Left inline, the toolbar HStack and its five <code>Menu</code>s would be reconstructed 20 times a second &mdash; in practice that interferes with menu hit-testing, dismisses popovers mid-tap, and makes dropdowns appear clipped.
+        </p>
+
+        <p>
+            The toolbar lives in its own <code>ControlsBarView: View, Equatable</code> sub-view that takes <em>only</em> the values it actually reads, as <code>@Binding</code>s plus action closures. A custom <code>==</code> compares the value-typed inputs and ignores the closures (which aren't <code>Equatable</code>). With <code>.equatable()</code> on the call site, SwiftUI runs that comparison on every parent rebuild and skips body evaluation when nothing toolbar-relevant has changed &mdash; so the open <code>Menu</code> survives intact. Same trick applied to <code>MissionsMenu</code>, which now takes <code>@Binding activeMissionId</code> + <code>let missions</code> + an <code>onCancel</code> closure rather than observing the whole view model.
+        </p>
+
+        <div class="mermaid">
+            graph LR
+                VM["SolarSystemViewModel<br/>(currentDate, screenLabels<br/>tick at 20 Hz)"] --> CV["ContentView<br/>(@StateObject)"]
+                CV --> LB["labelsOverlay<br/>(re-renders 20 Hz)"]
+                CV --> IP["InfoPanelView<br/>(re-renders 20 Hz)"]
+                CV --> CB["ControlsBarView<br/>(Equatable, .equatable())"]
+                CB -.skipped on tick.-> CB2["body { Menu × 5 }"]
+                CB -->|"@Binding isPaused, timeScale,<br/>showOrbits, label flags,<br/>showISS, activeMissionId"| CB2
+                CB -->|"closures:<br/>onResetCamera, onResetToNow,<br/>onFocusBody, onCancelMission, …"| CB2
+
+                style CB stroke:#FFAA33,stroke-width:2px
+                style CB2 stroke:#FFAA33,stroke-width:2px
+                style LB stroke:#666
+                style IP stroke:#666
+        </div>
+
+        <p>
+            Two related polish items rode along with the same fix. The speed menu's label is a <code>Text(formatTimeScale(timeScale))</code> &mdash; without <code>.lineLimit(1)</code> + <code>.fixedSize(horizontal: true, vertical: false)</code> SwiftUI's HStack layout would wrap wide values like <code>"100,000x"</code> vertically, growing the toolbar's height. And the original Satellites menu was a single-item <code>Menu</code> wrapping a single ISS toggle; collapsed to a plain <code>Button { showISS.toggle() }</code> matching the orbits-toggle pattern next to it.
+        </p>
+    </div>
+
     <!-- Rendering Pipeline -->
     <div class="diagram-section">
         <h2>Scene Graph</h2>

@@ -84,25 +84,32 @@ private struct RocketIcon: View {
 /// show/hide toggle for trajectories. Labelled with a procedural rocket
 /// silhouette (`RocketIcon`) — SF Symbols has no rocket glyph and a custom
 /// asset would break the "pure Apple frameworks" rule.
+///
+/// Takes explicit bindings + a closure rather than `@ObservedObject var
+/// viewModel` so this view doesn't re-evaluate on every per-frame
+/// `@Published` change in the parent view model — that rebuilds the
+/// `Menu` 20 times a second and makes its popover unreliable.
 struct MissionsMenu: View {
-    @ObservedObject var viewModel: SolarSystemViewModel
+    @Binding var activeMissionId: String?
+    let missions: [Mission]
+    let onCancel: () -> Void
 
     var body: some View {
         Menu {
             // iOS menus render bottom-to-top, so list control items first so
             // they appear at the *bottom* of the dropdown visually.
-            Button("Stop replay (1x)") { viewModel.cancelMission() }
-                .disabled(viewModel.activeMissionId == nil)
+            Button("Stop replay (1x)") { onCancel() }
+                .disabled(activeMissionId == nil)
 
             Divider()
 
             // Missions listed in reverse so the oldest (Apollo 8) sits at the
             // bottom of the menu and newest (Artemis II, Perseverance) at the top.
-            ForEach(viewModel.missionManager.missions.reversed(), id: \.id) { mission in
+            ForEach(missions.reversed(), id: \.id) { mission in
                 Button {
-                    viewModel.activeMissionId = mission.id
+                    activeMissionId = mission.id
                 } label: {
-                    if viewModel.activeMissionId == mission.id {
+                    if activeMissionId == mission.id {
                         Label(mission.name, systemImage: "checkmark.circle.fill")
                     } else {
                         Text(mission.name)
@@ -111,7 +118,7 @@ struct MissionsMenu: View {
             }
         } label: {
             RocketIcon()
-                .foregroundColor(viewModel.activeMissionId != nil ? .missionOrange : .gray)
+                .foregroundColor(activeMissionId != nil ? .missionOrange : .gray)
         }
     }
 }

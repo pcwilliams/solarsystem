@@ -70,7 +70,25 @@ struct ContentView: View {
                         .padding(.horizontal, 16)
                         .padding(.bottom, 4)
 
-                    controlsBar
+                    ControlsBarView(
+                        isPaused: $viewModel.isPaused,
+                        timeScale: $viewModel.timeScale,
+                        showPlanetLabels: $viewModel.showPlanetLabels,
+                        showMoonLabels: $viewModel.showMoonLabels,
+                        showStarLabels: $viewModel.showStarLabels,
+                        showISS: $viewModel.showISS,
+                        activeMissionId: $viewModel.activeMissionId,
+                        showOrbits: viewModel.showOrbits,
+                        missions: viewModel.missionManager.missions,
+                        planets: SolarSystemData.allPlanets,
+                        onToggleOrbits: { viewModel.toggleOrbits() },
+                        onResetCamera: { viewModel.resetCamera() },
+                        onResetToNow: { viewModel.resetToNow() },
+                        onShowCredits: { showCredits = true },
+                        onFocusBody: { viewModel.focusOnBody(named: $0) },
+                        onCancelMission: { viewModel.cancelMission() }
+                    )
+                    .equatable()
                 }
             }
 
@@ -102,118 +120,6 @@ struct ContentView: View {
         .sheet(isPresented: $showCredits) {
             CreditsView()
         }
-    }
-
-    // MARK: - Controls Bar
-
-    /// Bottom toolbar with play/pause, time scale, orbit/label toggles, and planet picker.
-    private var controlsBar: some View {
-        HStack(spacing: 16) {
-            // Play/Pause toggle
-            Button(action: { viewModel.isPaused.toggle() }) {
-                Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
-                    .font(.title3)
-                    .foregroundColor(.white)
-            }
-
-            // Time scale picker (real-time through 1Mx, plus reverse options)
-            Menu {
-                speedButton("Real-time (1x)", scale: 1.0)
-                speedButton("Fast (100x)", scale: 100.0)
-                speedButton("1,000x", scale: 1000.0)
-                speedButton("10,000x", scale: 10000.0)
-                speedButton("100,000x", scale: 100000.0)
-                speedButton("1,000,000x", scale: 1000000.0)
-                Divider()
-                speedButton("Slow (0.1x)", scale: 0.1)
-                speedButton("Reverse (-1x)", scale: -1.0)
-                speedButton("Reverse (-1,000x)", scale: -1000.0)
-                speedButton("Reverse (-100,000x)", scale: -100000.0)
-                Divider()
-                Button("Reset to Now") { viewModel.resetToNow() }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "gauge.with.dots.needle.67percent")
-                    Text(formatTimeScale(viewModel.timeScale))
-                        .font(.caption)
-                }
-                .foregroundColor(.orange)
-            }
-
-            Spacer()
-
-            // Toggle orbital path visibility
-            Button(action: { viewModel.toggleOrbits() }) {
-                Image(systemName: viewModel.showOrbits ? "circle.circle.fill" : "circle.circle")
-                    .foregroundColor(viewModel.showOrbits ? .orange : .gray)
-            }
-
-            // Label category toggles (planets, moons, stars)
-            Menu {
-                // iOS menus render bottom-to-top, so reverse order for visual top-to-bottom
-                Button {
-                    viewModel.showStarLabels.toggle()
-                } label: {
-                    Label("Stars", systemImage: viewModel.showStarLabels ? "checkmark.circle.fill" : "circle")
-                }
-                Button {
-                    viewModel.showMoonLabels.toggle()
-                } label: {
-                    Label("Moons", systemImage: viewModel.showMoonLabels ? "checkmark.circle.fill" : "circle")
-                }
-                Button {
-                    viewModel.showPlanetLabels.toggle()
-                } label: {
-                    Label("Planets", systemImage: viewModel.showPlanetLabels ? "checkmark.circle.fill" : "circle")
-                }
-            } label: {
-                Image(systemName: (viewModel.showPlanetLabels || viewModel.showMoonLabels || viewModel.showStarLabels) ? "tag.fill" : "tag")
-                    .foregroundColor((viewModel.showPlanetLabels || viewModel.showMoonLabels || viewModel.showStarLabels) ? .orange : .gray)
-            }
-
-            // Satellites menu (ISS toggle — extensible if we add more satellites later)
-            Menu {
-                Button {
-                    viewModel.showISS.toggle()
-                } label: {
-                    Label("ISS", systemImage: viewModel.showISS ? "checkmark.circle.fill" : "circle")
-                }
-            } label: {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .foregroundColor(viewModel.showISS ? .orange : .gray)
-            }
-
-            // Missions dropdown (rocket icon → list of 11 missions + Stop replay)
-            MissionsMenu(viewModel: viewModel)
-
-            // Quick-jump to any planet
-            Menu {
-                Button("Overview") { viewModel.resetCamera() }
-                Divider()
-                Button("Sun") { viewModel.focusOnBody(named: "Sun") }
-                ForEach(SolarSystemData.allPlanets, id: \.id) { planet in
-                    Button(planet.name) { viewModel.focusOnBody(named: planet.name) }
-                }
-            } label: {
-                Image(systemName: "globe")
-                    .foregroundColor(.orange)
-            }
-
-            // Reset to full solar system overview
-            Button(action: { viewModel.resetCamera() }) {
-                Image(systemName: "house.fill")
-                    .foregroundColor(.white)
-            }
-
-            // Credits / About
-            Button(action: { showCredits = true }) {
-                Image(systemName: "info.circle")
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
     }
 
     // MARK: - Zoom Slider
@@ -297,17 +203,173 @@ struct ContentView: View {
         .ignoresSafeArea()
     }
 
-    // MARK: - Helpers
+}
 
-    /// Format the time scale value for display (e.g. "1,000x", "-100,000x", "1Mx").
+// MARK: - Controls Bar
+
+/// Bottom toolbar with play/pause, time scale, orbit/label toggles,
+/// satellites, missions, and planet picker.
+///
+/// Lives in its own `Equatable` View so it doesn't re-evaluate when the
+/// parent `SolarSystemViewModel`'s per-frame `@Published` properties tick
+/// (`currentDate`, `screenLabels`, `missionTelemetry`). Without this,
+/// `ContentView.body` rebuilds the toolbar HStack at ~20 Hz during
+/// simulation, which made every `Menu` popover unreliable: taps landed on
+/// stale views, dropdowns clipped mid-render, and items occasionally
+/// failed to register. Inputs are explicit `@Binding`s and closures so
+/// the auto-synthesized equality (plus the explicit `==` below) skips
+/// rebuild whenever no toolbar-relevant state has changed.
+private struct ControlsBarView: View, Equatable {
+    @Binding var isPaused: Bool
+    @Binding var timeScale: Double
+    @Binding var showPlanetLabels: Bool
+    @Binding var showMoonLabels: Bool
+    @Binding var showStarLabels: Bool
+    @Binding var showISS: Bool
+    @Binding var activeMissionId: String?
+
+    let showOrbits: Bool
+    let missions: [Mission]
+    let planets: [CelestialBody]
+
+    let onToggleOrbits: () -> Void
+    let onResetCamera: () -> Void
+    let onResetToNow: () -> Void
+    let onShowCredits: () -> Void
+    let onFocusBody: (String) -> Void
+    let onCancelMission: () -> Void
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.isPaused == rhs.isPaused
+            && lhs.timeScale == rhs.timeScale
+            && lhs.showPlanetLabels == rhs.showPlanetLabels
+            && lhs.showMoonLabels == rhs.showMoonLabels
+            && lhs.showStarLabels == rhs.showStarLabels
+            && lhs.showISS == rhs.showISS
+            && lhs.activeMissionId == rhs.activeMissionId
+            && lhs.showOrbits == rhs.showOrbits
+        // missions / planets are static immutable lists; closures aren't
+        // comparable. Skipping both is safe — neither carries state that
+        // should force a rebuild on its own.
+    }
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Play/Pause toggle
+            Button(action: { isPaused.toggle() }) {
+                Image(systemName: isPaused ? "play.fill" : "pause.fill")
+                    .font(.title3)
+                    .foregroundColor(.white)
+            }
+
+            // Time scale picker (real-time through 1Mx, plus reverse options)
+            Menu {
+                speedButton("Real-time (1x)", scale: 1.0)
+                speedButton("Fast (100x)", scale: 100.0)
+                speedButton("1,000x", scale: 1000.0)
+                speedButton("10,000x", scale: 10000.0)
+                speedButton("100,000x", scale: 100000.0)
+                speedButton("1,000,000x", scale: 1000000.0)
+                Divider()
+                speedButton("Slow (0.1x)", scale: 0.1)
+                speedButton("Reverse (-1x)", scale: -1.0)
+                speedButton("Reverse (-1,000x)", scale: -1000.0)
+                speedButton("Reverse (-100,000x)", scale: -100000.0)
+                Divider()
+                Button("Reset to Now") { onResetToNow() }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "gauge.with.dots.needle.67percent")
+                    Text(formatTimeScale(timeScale))
+                        .font(.caption)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .foregroundColor(.orange)
+            }
+
+            Spacer()
+
+            // Toggle orbital path visibility
+            Button(action: onToggleOrbits) {
+                Image(systemName: showOrbits ? "circle.circle.fill" : "circle.circle")
+                    .foregroundColor(showOrbits ? .orange : .gray)
+            }
+
+            // Label category toggles (planets, moons, stars)
+            Menu {
+                // iOS menus render bottom-to-top, so reverse order for visual top-to-bottom
+                Button {
+                    showStarLabels.toggle()
+                } label: {
+                    Label("Stars", systemImage: showStarLabels ? "checkmark.circle.fill" : "circle")
+                }
+                Button {
+                    showMoonLabels.toggle()
+                } label: {
+                    Label("Moons", systemImage: showMoonLabels ? "checkmark.circle.fill" : "circle")
+                }
+                Button {
+                    showPlanetLabels.toggle()
+                } label: {
+                    Label("Planets", systemImage: showPlanetLabels ? "checkmark.circle.fill" : "circle")
+                }
+            } label: {
+                Image(systemName: (showPlanetLabels || showMoonLabels || showStarLabels) ? "tag.fill" : "tag")
+                    .foregroundColor((showPlanetLabels || showMoonLabels || showStarLabels) ? .orange : .gray)
+            }
+
+            // ISS toggle (direct button — same pattern as the orbits toggle).
+            // If more satellites get added later, swap this for a Menu again.
+            Button(action: { showISS.toggle() }) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .foregroundColor(showISS ? .orange : .gray)
+            }
+
+            // Missions dropdown (rocket icon → list of 11 missions + Stop replay)
+            MissionsMenu(activeMissionId: $activeMissionId,
+                         missions: missions,
+                         onCancel: onCancelMission)
+
+            // Quick-jump to any planet
+            Menu {
+                Button("Overview") { onResetCamera() }
+                Divider()
+                Button("Sun") { onFocusBody("Sun") }
+                ForEach(planets, id: \.id) { planet in
+                    Button(planet.name) { onFocusBody(planet.name) }
+                }
+            } label: {
+                Image(systemName: "globe")
+                    .foregroundColor(.orange)
+            }
+
+            // Reset to full solar system overview
+            Button(action: onResetCamera) {
+                Image(systemName: "house.fill")
+                    .foregroundColor(.white)
+            }
+
+            // Credits / About
+            Button(action: onShowCredits) {
+                Image(systemName: "info.circle")
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+    }
+
     private func speedButton(_ title: String, scale: Double) -> some View {
         Button {
-            viewModel.timeScale = scale
+            timeScale = scale
         } label: {
-            Label(title, systemImage: viewModel.timeScale == scale ? "checkmark" : "")
+            Label(title, systemImage: timeScale == scale ? "checkmark" : "")
         }
     }
 
+    /// Format the time scale value for display (e.g. "1,000x", "-100,000x", "1Mx").
     private func formatTimeScale(_ scale: Double) -> String {
         let absScale = abs(scale)
         let prefix = scale < 0 ? "-" : ""

@@ -18,7 +18,7 @@ A real-time solar system simulation for **iPhone and Mac**, powered by real orbi
 - **Time control** — Real-time through 1,000,000x speed, reverse, Reset to Now
 - **Smart labels** — Separate toggles for planet, moon, and star labels. Auto-deconflicted, occluded behind planets, persisted across launches
 - **11 space missions** — Historical and active mission trajectories with multi-vehicle support, runtime lunar orbit/landing phases, live telemetry (MET, distance, speed), and timed event detection. Lunar missions (`apollo8`, `apollo11`, `apollo13`, `artemis2`), interplanetary gravity-assist tours (`cassini`, `voyager1`, `voyager2`, `bepicolombo`, `parker`), transfer arcs (`perseverance`), and outer planet flybys (`newhorizons`) all selectable via `-mission <id>` or the in-app missions menu. The mission UI shows a glass-morphism telemetry panel, an orange timeline scrubber, and animated event banners as each trajectory milestone passes. Lunar missions get a lazy-follow camera that frames Earth and the trajectory Sun-side until you drag. Trajectory data is one-shot exported from the companion web app into a bundled JSON resource — re-run `node tools/export-missions.mjs` when upstream data changes.
-- **International Space Station** — Toggleable via the Satellites menu. Procedural 3D model with central truss, pressurised modules, four pairs of solar panels, and two radiators; orbits Earth at 408 km altitude and 51.6° inclination with a 92-minute period.
+- **International Space Station** — One-tap toggle on the toolbar (antenna icon). Procedural 3D model with central truss, pressurised modules, four pairs of solar panels, and two radiators; orbits Earth at 408 km altitude and 51.6° inclination with a 92-minute period.
 
 ## Requirements
 
@@ -76,8 +76,8 @@ No API keys, no external dependencies — pure Apple frameworks.
 - **Speed menu** — 0.1x to 1,000,000x, reverse, Reset to Now
 - **Orbit toggle** — Show/hide orbital path lines
 - **Label menu** — Independent toggles for Planets, Moons, Stars
-- **Satellites menu** — Toggle the ISS model (antenna icon)
-- **Missions menu** — Pick any of 11 space missions to replay, or stop the current replay (airplane icon)
+- **ISS toggle** — Show/hide the International Space Station (antenna icon)
+- **Missions menu** — Pick any of 11 space missions to replay, or stop the current replay (rocket icon)
 - **Planet picker** — Jump to any planet, the Sun, or overview
 - **Home** — Return to the full solar system overview
 
@@ -106,6 +106,18 @@ The fastest way to get the app onto your Mac:
 ```
 
 The script builds Release, kills any running instance, copies into `/Applications` (or `~/Applications` if unprivileged), and opens a fresh copy. Pass any of the launch args below on the command line.
+
+## Running on iPhone
+
+For a connected, paired, unlocked iPhone:
+
+```bash
+./run_phone.sh                                 # build, install, launch
+./run_phone.sh -mission apollo11 -focus earth  # any launch-arg works
+./run_phone.sh -showISS -frameLog              # ISS visible + per-frame timing
+```
+
+The script builds with proper code-signing (using `-allowProvisioningUpdates` and the team ID from `~/appledev/setupenv.sh`), installs via `devicectl`, and launches with any extra arguments forwarded to the app.
 
 ## Testing
 
