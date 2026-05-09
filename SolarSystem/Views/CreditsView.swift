@@ -44,26 +44,25 @@ struct CreditsView: View {
 
                     // CC-BY 4.0
                     creditsSection(title: "CC-BY 4.0") {
-                        creditRow("Mercury, Venus, Uranus, Neptune",
+                        creditRow("Mercury, Venus, Saturn (body & rings), Uranus, Neptune",
                                   detail: "Solar System Scope (solarsystemscope.com)")
                     }
 
-                    // Planet Pixel Emporium
-                    creditsSection(title: "Free Non-Commercial Use") {
-                        creditRow("Saturn (body & rings)",
-                                  detail: "Planet Pixel Emporium by James Hastings-Trew")
-                    }
-
                     // Galilean moon composites
-                    creditsSection(title: "From NASA Public Domain Data") {
-                        creditRow("Io, Ganymede", detail: "Assembled by Steve Albers")
-                        creditRow("Callisto", detail: "Assembled by Bjorn Jonsson")
+                    creditsSection(title: "Publicly Available, Attribution Requested") {
+                        creditRow("Io, Ganymede, Callisto",
+                                  detail: "Björn Jónsson (bjj.mmedia.is), from NASA/JPL Voyager + Galileo data")
                     }
 
                     // Star catalogue
-                    creditsSection(title: "CC-BY-SA 2.0") {
-                        creditRow("8,920 Stars",
-                                  detail: "HYG Database v38 by David Nash (astronexus). Compiled from ESA Hipparcos, Yale BSC, and Gliese catalogues.")
+                    creditsSection(title: "Public Domain") {
+                        creditRow("8,404 Stars",
+                                  detail: "Yale Bright Star Catalog, 5th Rev. (Hoffleit & Warren, 1991), prepared at NASA Goddard NSSDC/ADC. Distributed via VizieR catalogue V/50.")
+                    }
+
+                    // Licence
+                    creditsSection(title: "Licence") {
+                        creditRow("Source code", detail: "MIT licence — see LICENSE and THIRDPARTY.md")
                     }
 
                     // Built with

@@ -3,8 +3,9 @@
 //
 // Constructs and configures the SceneKit scene graph. Creates sphere nodes
 // for celestial bodies, orbital path line geometry, Saturn's ring disc,
-// the Sun's multi-layered glow corona, a real starfield from the HYG
-// catalogue (with per-vertex B-V colour), and the scene's lighting and camera.
+// the Sun's multi-layered glow corona, a real starfield from the Yale
+// Bright Star Catalog (BSC5, with per-vertex B-V colour), and the scene's
+// lighting and camera.
 //
 // Also provides position update methods that convert heliocentric AU
 // coordinates to logarithmically-scaled SceneKit positions.
@@ -15,7 +16,7 @@ import simd
 
 // MARK: - Named Star
 
-/// A star from the HYG catalogue with a common name, used for label projection.
+/// A star from the BSC5 catalogue with a common name, used for label projection.
 struct NamedStar {
     let name: String
     let position: SCNVector3
@@ -345,15 +346,20 @@ final class SceneBuilder {
         let geometry = SCNGeometry(sources: [vertexSource, normalSource, uvSource], elements: [element])
 
         let ringMaterial = SCNMaterial()
-        // Planet Pixel Emporium ring textures: separate colour and alpha maps
-        if let colorPath = Bundle.main.path(forResource: "saturn_ring_color", ofType: "jpg") {
-            ringMaterial.diffuse.contents = PlatformImage(contentsOfFile: colorPath)
+        // Solar System Scope ring texture (CC-BY 4.0): single RGBA PNG that
+        // carries the ring banding as alpha + grey-luminance with effectively
+        // no chroma. Use it for both diffuse and transparent (SceneKit honours
+        // the alpha channel when set as transparent.contents), then multiply
+        // by a warm cream to tint the rings into a Cassini-natural-colour
+        // appearance — without the tint they render greyscale.
+        if let ringPath = Bundle.main.path(forResource: "saturn_rings", ofType: "png"),
+           let ringImage = PlatformImage(contentsOfFile: ringPath) {
+            ringMaterial.diffuse.contents = ringImage
+            ringMaterial.transparent.contents = ringImage
         } else {
             ringMaterial.diffuse.contents = PlatformColor(red: 0.85, green: 0.78, blue: 0.6, alpha: 1.0)
         }
-        if let alphaPath = Bundle.main.path(forResource: "saturn_ring_alpha", ofType: "gif") {
-            ringMaterial.transparent.contents = PlatformImage(contentsOfFile: alphaPath)
-        }
+        ringMaterial.multiply.contents = PlatformColor(red: 0xE8 / 255.0, green: 0xD8 / 255.0, blue: 0xB8 / 255.0, alpha: 1.0)
         ringMaterial.lightingModel = .constant
         ringMaterial.isDoubleSided = true
         geometry.firstMaterial = ringMaterial
@@ -411,9 +417,9 @@ final class SceneBuilder {
         return node
     }
 
-    // MARK: - Starfield (HYG Catalogue)
+    // MARK: - Starfield (Yale BSC5 Catalogue)
 
-    /// Load the HYG star catalogue CSV and create a point-cloud geometry with
+    /// Load the BSC5 star catalogue CSV and create a point-cloud geometry with
     /// per-vertex colour and brightness-tiered point sizes.
     private func addStarfield(to scene: SCNScene) {
         guard let path = Bundle.main.path(forResource: "stars", ofType: "csv"),

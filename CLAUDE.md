@@ -629,7 +629,11 @@ Use the parent's **semi-major axis** (not its instantaneous distance) when placi
 
 ## Star catalogue rendering
 
-Bundle **HYG (Hipparcos/Yale/Gliese) v38**, public domain. Filter to naked-eye visibility (`mag ≤ 6.5`) — that's roughly 8,920 stars. Map RA/Dec to a celestial sphere at large radius (`r = 500` scene units works well).
+Bundle the **Yale Bright Star Catalog, 5th Rev. (BSC5)** — Hoffleit & Warren (1991), prepared at NASA Goddard NSSDC/ADC, public domain. Available via VizieR catalogue [V/50](https://cdsarc.cds.unistra.fr/viz-bin/cat/V/50) as `catalog.gz` (197-byte fixed-width records, 9,110 stars). Filter to naked-eye visibility (`mag ≤ 6.5`) — that's roughly 8,400 stars. Map RA/Dec to a celestial sphere at large radius (`r = 500` scene units works well).
+
+Avoid the **HYG database** unless the project tolerates CC-BY-SA. HYG v3+ is licensed CC-BY-SA 4.0 (was 2.5 in earlier versions) — the share-alike clause is incompatible with permissive (MIT/BSD) project licences. BSC5 is a clean PD substitute that preserves the same RA/Dec/Vmag/B-V columns; rebuild from the raw VizieR file with a small parser script.
+
+Star *names* (Sirius, Vega, Aldebaran …) are traditional / IAU-standardised — factual references, not subject to copyright, so they can be embedded freely or cross-referenced from the IAU-CSN list regardless of catalogue licence.
 
 Use **4 brightness tiers** with different point sizes (mag < 1.5 → 3–8 px; mag 5–6.5 → 0.8–2 px) and **per-vertex B-V colour** for spectral type (blue-white O/B → white A → yellow G → orange K → red M).
 
@@ -812,21 +816,26 @@ Test specifically:
 - Mission rotation, anchor resolution, autoTimeScale preset snap, transfer-arc monotonic timeline.
 - Event fire-once + rewind reset (cursor must reset even when sim time is outside the active window, so jumping pre-launch still clears it).
 
-## Texture / data sources (public domain or CC-BY)
+## Texture / data sources (MIT-redistributable)
 
-For NASA/USGS textures and the HYG star catalogue, these sources have worked:
+These sources have worked, are easy to fetch, and stay clear of share-alike (CC-BY-SA) and non-commercial (CC-BY-NC) licences that would block bundling under a permissive project licence:
 
-- Earth: NASA Blue Marble Next Generation
-- Moon: NASA LRO Camera
-- Mars: USGS Viking MDIM21 via Wikimedia
-- Mercury / Venus / Uranus / Neptune: Solar System Scope (CC-BY 4.0)
-- Jupiter: NASA/JPL/SSI Cassini PIA07782
-- Saturn (+ rings): Cassini composite, Planet Pixel Emporium
-- Pluto: NASA/JHUAPL/SwRI New Horizons
-- Galilean moons: Voyager/Galileo composites (Steve Albers, Bjorn Jonsson)
-- Stars: HYG Database v38 (Hipparcos/Yale/Gliese, public domain)
+- Earth: NASA Blue Marble Next Generation — public domain
+- Moon: NASA LRO Camera — public domain
+- Mars: USGS Viking MDIM21 via Wikimedia — public domain
+- Mercury / Venus / Saturn (body + rings) / Uranus / Neptune: [Solar System Scope](https://www.solarsystemscope.com/textures/) — CC-BY 4.0
+- Jupiter: NASA/JPL/SSI Cassini [PIA07782](https://photojournal.jpl.nasa.gov/catalog/PIA07782) — public domain
+- Pluto: NASA/JHUAPL/SwRI New Horizons — public domain
+- Galilean moons (Io, Ganymede, Callisto): [Björn Jónsson](https://bjj.mmedia.is/) from NASA/JPL Voyager + Galileo data — "publicly available, please mention origin" (CC-BY-equivalent)
+- Europa: NASA/JPL Voyager/Galileo mosaic via Wikimedia — public domain
+- Stars: Yale Bright Star Catalog 5th Rev. (BSC5), Hoffleit & Warren 1991 / NASA Goddard NSSDC/ADC, via [VizieR V/50](https://cdsarc.cds.unistra.fr/viz-bin/cat/V/50) — public domain
 
-All NASA and USGS data is public domain (US government work). Cassini imagery is public domain via NASA/JPL/SSI. Solar System Scope textures are CC-BY 4.0 — credit them.
+**Avoid for MIT-redistributable projects:**
+- Planet Pixel Emporium (James Hastings-Trew) — "free non-commercial" only
+- HYG Database v3+ (astronexus) — CC-BY-SA 4.0 (share-alike is viral copyleft)
+- Steve Albers' planetary maps — page declares "personal non-commercial use only" despite being derived from public-domain NASA data
+
+NASA, USGS, and PDS-hosted Cassini data are public domain (US Government works). Solar System Scope textures are CC-BY 4.0 — credit them. Björn Jónsson's terms ("publicly available, please mention origin") are functionally CC-BY. All three categories can be bundled with a permissive (MIT/BSD/Apache) project licence as long as the attributions are preserved (typically via a `THIRDPARTY.md` notice file and an in-app credits panel).
 
 ---
 
@@ -834,7 +843,7 @@ All NASA and USGS data is public domain (US government work). Cassini imagery is
 
 ## Overview
 
-A GPU-accelerated solar system simulation for **iPhone and macOS**, using real Keplerian orbital mechanics (JPL J2000.0 elements) to calculate planet, moon, and Sun positions based on the current date and time. SceneKit renders the 3D scene with NASA/public-domain texture maps on all planets and major moons. 8,920 real stars from the Hipparcos catalogue form the backdrop, with correct positions, magnitudes, and colours. All bodies rotate at their real IAU sidereal rates with correct axial tilts. Custom gesture handling provides platform-native navigation: touch gestures on iOS (one-finger pan, two-finger orbit, pinch-to-zoom) and mouse / trackpad on macOS (left-drag pan, right-drag orbit, scroll / pinch zoom).
+A GPU-accelerated solar system simulation for **iPhone and macOS**, using real Keplerian orbital mechanics (JPL J2000.0 elements) to calculate planet, moon, and Sun positions based on the current date and time. SceneKit renders the 3D scene with NASA/public-domain texture maps on all planets and major moons. 8,404 real stars from the Yale Bright Star Catalog (BSC5) form the backdrop, with correct positions, magnitudes, and colours. All bodies rotate at their real IAU sidereal rates with correct axial tilts. Custom gesture handling provides platform-native navigation: touch gestures on iOS (one-finger pan, two-finger orbit, pinch-to-zoom) and mouse / trackpad on macOS (left-drag pan, right-drag orbit, scroll / pinch zoom).
 
 The app is a **single multi-platform target** — one Xcode target builds for both `iphoneos`/`iphonesimulator` and `macosx`. A thin `Platform.swift` abstraction file handles the UIKit↔AppKit type differences; everything above that file is 100% shared code.
 
@@ -886,7 +895,7 @@ Real Time (Date)
 - **Centripetal CatmullRom**: Trajectories are smoothed with a pure-Swift centripetal Catmull-Rom implementation (alpha = 0.5) matching Three.js's `CatmullRomCurve3`. Sampling is time-parameterised (uniform time steps, not arc length) so the marker advances linearly with mission time.
 - **Deferred launch-arg focus**: Coordinator isn't available during `init()`. A `pendingFocus` string is applied once the coordinator connects via `didSet`.
 - **Throttled label updates**: Labels only re-project every 3rd frame to reduce SwiftUI overhead. Labels hide entirely during zoom slider drag.
-- **Real star catalogue**: 8,920 stars from HYG (Hipparcos/Yale/Gliese) database, filtered to naked-eye visibility (mag <= 6.5). ~120 brightest named stars labelled.
+- **Real star catalogue**: 8,404 stars from Yale Bright Star Catalog 5th Rev. (BSC5, Hoffleit & Warren 1991, NASA Goddard NSSDC/ADC, public domain) via VizieR V/50. Filtered to naked-eye visibility (V ≤ 6.5). ~370 named stars labelled. Build script at `tools/build_stars.py` regenerates `Textures/stars.csv` from the raw VizieR catalogue.
 - **IAU rotation model**: Every body has sidereal rotation period, axial obliquity, and prime meridian at J2000.0. Tidally locked moons match their orbital period. Saturn's rings counter-rotate to cancel parent spin.
 - **Persisted settings**: Label toggles (planet/moon/star) and orbit visibility saved to UserDefaults.
 
@@ -949,9 +958,8 @@ SolarSystem/
     │   ├── europa_2k.jpg               # Voyager/Galileo (1024x512, 133 KB)
     │   ├── ganymede_2k.jpg             # Voyager/Galileo (4096x2048, 938 KB)
     │   ├── callisto_2k.jpg             # Voyager/Galileo (1800x900, 430 KB)
-    │   ├── saturn_ring_color.jpg       # Ring colour map (915x64, 9 KB)
-    │   ├── saturn_ring_alpha.gif       # Ring transparency (915x64, 28 KB)
-    │   └── stars.csv                    # HYG catalogue: 8,920 stars (274 KB)
+    │   ├── saturn_rings.png            # Ring colour + alpha (2048x125 RGBA, 12 KB)
+    │   └── stars.csv                    # Yale BSC5: 8,404 stars (258 KB)
     ├── Resources/
     │   └── Missions.json                # 11 missions, 58 events, 213 waypoints (~80 KB); generated by tools/export-missions.mjs
     └── Assets.xcassets/
@@ -996,11 +1004,38 @@ SolarSystem/
 | Uranus | Voyager-based, Solar System Scope | CC-BY 4.0 |
 | Neptune | Voyager-based, Solar System Scope | CC-BY 4.0 |
 | Jupiter | NASA/JPL/SSI Cassini PIA07782 | Public domain |
-| Saturn (+rings) | Cassini composite, Planet Pixel Emporium | Free non-commercial |
+| Saturn (+rings) | Solar System Scope | CC-BY 4.0 |
 | Pluto | NASA/JHUAPL/SwRI New Horizons | Public domain |
-| Io, Europa, Ganymede | Voyager/Galileo, Steve Albers | Public domain data |
-| Callisto | Voyager/Galileo, Bjorn Jonsson | Public domain data |
-| Stars | HYG Database v38 (Hipparcos/Yale/Gliese) | Public domain |
+| Io, Ganymede, Callisto | Björn Jónsson, from NASA/JPL Voyager + Galileo data | Publicly available, attribution requested |
+| Europa | NASA/JPL Voyager/Galileo via Wikimedia | Public domain |
+| Stars | Yale Bright Star Catalog 5th Rev. (BSC5, NASA Goddard NSSDC/ADC) via VizieR V/50 | Public domain |
+
+### Saturn ring tinting (SceneKit specific)
+
+The Solar System Scope ring texture (`saturn_rings.png`) is essentially a luminance/alpha density map with negligible chroma. Without a tint, the rings render greyscale. The fix in `SceneBuilder.swift` is to apply a warm cream tint via the material's multiply channel:
+
+```swift
+ringMaterial.diffuse.contents = ringImage         // RGBA — Three.js's `map`
+ringMaterial.transparent.contents = ringImage      // alpha channel for transparency
+ringMaterial.multiply.contents = PlatformColor(red: 0xE8/255, green: 0xD8/255, blue: 0xB8/255, alpha: 1)
+```
+
+`#E8D8B8` is the same value used by the web port and reads as a Cassini-natural-colour cream. More saturated tints (e.g. `#D4B483`) take the rings brown — too warm. SceneKit's `multiply.contents` is the equivalent of Three.js's `material.color`: the channel is multiplied with the diffuse texture per-pixel, preserving the alpha-encoded ring banding while shifting hue.
+
+## Licence
+
+Source code is MIT (see `LICENSE`). Bundled assets each carry their own
+licence — see `THIRDPARTY.md` for the full inventory. All bundled assets
+permit redistribution including commercial use when their attributions are
+preserved. The Credits sheet in `Views/CreditsView.swift` (top-right toolbar
+button) also surfaces these to end users at runtime.
+
+Replacing assets must keep the project MIT-redistributable: avoid CC-BY-SA
+(viral/share-alike) and "non-commercial only" sources. Acceptable additions:
+NASA/USGS public-domain works, CC-BY 4.0 (e.g. Solar System Scope), and
+"publicly available, please mention origin" assets like Björn Jónsson's
+maps. The star catalogue is reproducible from `tools/build_stars.py` against
+the public-domain VizieR BSC5 (V/50) source.
 
 ## Project-Specific Implementation Notes
 
@@ -1015,7 +1050,7 @@ The general orbital-mechanics pipeline, IAU rotation model, scaling formulas, mi
 ```
 SCNScene (black background)
 ├── Camera (custom-controlled, FOV 60°, zNear 0.01, zFar 1000)
-├── Starfield (8,920 HYG stars, 4 brightness tiers, B-V colour, r=500)
+├── Starfield (8,404 BSC5 stars, 4 brightness tiers, B-V colour, r=500)
 ├── Sun Light (omni, warm white, intensity 2000, falloff 0-500)
 ├── Ambient Light (intensity 500, 15% white)
 ├── Sun (r=0.8, emissive, procedural texture, 25.05-day rotation)

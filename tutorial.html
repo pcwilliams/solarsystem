@@ -273,7 +273,7 @@
 
         <div class="prompt">Could we texture map all the remaining planets and major moons from NASA data? Also, could the textures rotate realistically?</div>
 
-        <div class="response">Downloaded equirectangular texture maps for all 9 planets and 5 major moons from NASA (Earth, Moon, Mars, Jupiter, Pluto, Europa), Solar System Scope CC-BY 4.0 (Mercury, Venus, Uranus, Neptune), Planet Pixel Emporium (Saturn), and Voyager/Galileo composites (Io, Ganymede, Callisto). Added IAU rotation data for every body &mdash; sidereal rotation period, axial obliquity, and prime meridian at J2000.0. Tidally locked moons (including Earth's) match their orbital period so the same face always points toward their parent. Venus rotates backwards at 177&deg;, Uranus rolls on its side at 98&deg;.</div>
+        <div class="response">Downloaded equirectangular texture maps for all 9 planets and 5 major moons from NASA (Earth, Moon, Mars, Jupiter, Pluto, Europa), Solar System Scope CC-BY 4.0 (Mercury, Venus, Saturn body + rings, Uranus, Neptune), and Björn Jónsson&rsquo;s Voyager/Galileo composites (Io, Ganymede, Callisto). Added IAU rotation data for every body &mdash; sidereal rotation period, axial obliquity, and prime meridian at J2000.0. Tidally locked moons (including Earth&rsquo;s) match their orbital period so the same face always points toward their parent. Venus rotates backwards at 177&deg;, Uranus rolls on its side at 98&deg;.</div>
 
         <div class="outcome">Every body in the simulation now has a real photographic texture rotating at its correct rate. Speed up time to 10,000x to see Jupiter's cloud bands spin (one rotation every 3.6 seconds), or watch the Moon keep its familiar face toward Earth. Saturn's rings stay fixed in the equatorial plane while the cloud bands rotate beneath.</div>
 
@@ -283,11 +283,11 @@
     <!-- Step 10 -->
     <div class="step">
         <span class="step-number">10</span>
-        <h2 class="step-title">8,920 Real Stars</h2>
+        <h2 class="step-title">8,400+ Real Stars</h2>
 
         <div class="prompt">Is the star field accurate, or just random points?</div>
 
-        <div class="response">Downloaded the HYG v38 star catalogue (Hipparcos/Yale/Gliese amalgamation), filtered to 8,920 naked-eye stars. Each star mapped to the celestial sphere from its RA/Dec coordinates, sized by magnitude across 4 brightness tiers, and coloured by B-V index (blue-white O/B stars through yellow G stars to red M stars). The ~120 brightest named stars are labelled.</div>
+        <div class="response">Built `tools/build_stars.py` to extract the Yale Bright Star Catalog 5th Rev. (BSC5, Hoffleit &amp; Warren 1991, NASA Goddard NSSDC/ADC, public domain) from VizieR catalogue V/50, filtered to 8,404 naked-eye stars at V&nbsp;&le;&nbsp;6.5. Each star mapped to the celestial sphere from its RA/Dec coordinates, sized by magnitude across 4 brightness tiers, and coloured by B-V index (blue-white O/B stars through yellow G stars to red M stars). The ~370 brightest named stars are labelled.</div>
 
         <div class="outcome">Recognisable constellations visible in the background. The Milky Way's galactic plane shows as a clear density concentration. Zoom in on any planet and see the real stars behind it. Sirius, Betelgeuse, Polaris, Vega &mdash; all in their correct positions with correct colours and relative brightnesses.</div>
 
@@ -305,7 +305,7 @@
 
         <div class="outcome">A polished, feature-complete orrery. Settings persist across launches. The zoom slider provides precise control from planet close-ups to the full solar system. The app icon captures the essence of the simulation in a single glance. Code is clean and well-documented for future development.</div>
 
-        <div class="tech-note">Performance was critical for the zoom slider. The original SwiftUI <code>Slider</code> caused frame drops by publishing changes every pixel. Replaced with a custom <code>DragGesture</code> control, and label projection is throttled to every 3rd frame. Labels are hidden entirely during zoom drags via an <code>isZooming</code> flag. Licence research led to replacing Jupiter and Pluto textures with direct NASA public-domain sources, keeping only Saturn's Planet Pixel Emporium textures (the best available for ring detail).</div>
+        <div class="tech-note">Performance was critical for the zoom slider. The original SwiftUI <code>Slider</code> caused frame drops by publishing changes every pixel. Replaced with a custom <code>DragGesture</code> control, and label projection is throttled to every 3rd frame. Labels are hidden entirely during zoom drags via an <code>isZooming</code> flag. A later licence pass switched the project to fully MIT-redistributable bundled assets &mdash; Saturn body and rings now come from Solar System Scope (CC-BY 4.0), and the star catalogue is the public-domain Yale BSC5 prepared at NASA Goddard NSSDC/ADC.</div>
     </div>
 
     <!-- Step 12 -->

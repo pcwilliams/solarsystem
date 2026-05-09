@@ -1,6 +1,6 @@
 # SolarSystem
 
-A real-time solar system simulation for **iPhone and Mac**, powered by real orbital mechanics, NASA texture maps, and 8,920 real stars from the Hipparcos catalogue. One multi-platform Xcode target builds natively for iOS and macOS from the same source code.
+A real-time solar system simulation for **iPhone and Mac**, powered by real orbital mechanics, NASA texture maps, and 8,404 real stars from the Yale Bright Star Catalog. One multi-platform Xcode target builds natively for iOS and macOS from the same source code.
 
 ![SolarSystem - Saturn with rings, moons, and real star names](https://pcwilliams.design/dev/solarsystem/solarsystem.png)
 
@@ -8,7 +8,7 @@ A real-time solar system simulation for **iPhone and Mac**, powered by real orbi
 
 - **Accurate planetary positions** — Keplerian orbital elements from JPL calculate where every planet actually is right now
 - **NASA texture maps** — All 9 planets, Earth's Moon, Jupiter's Galilean moons, and Pluto use real imagery from NASA, USGS, and Cassini
-- **8,920 real stars** — Hipparcos catalogue with correct positions, magnitudes, and B-V colours. Recognisable constellations, Milky Way density
+- **8,404 real stars** — Yale Bright Star Catalog with correct positions, magnitudes, and B-V colours. Recognisable constellations, Milky Way density
 - **Realistic rotation** — Every body spins at its real IAU sidereal rate with correct axial tilt. Venus rotates backwards, Uranus rolls on its side
 - **Tidally locked moons** — Earth's Moon, all Galilean moons, and Saturn's moons always show the correct face to their parent
 - **Saturn's rings** — Custom geometry with Cassini colour and transparency maps, correctly tilted and non-rotating
@@ -42,7 +42,7 @@ No API keys, no external dependencies — pure Apple frameworks.
 4. **Positions are scaled** logarithmically so the whole solar system fits on screen
 5. **IAU rotation** is applied — axial tilt and spin angle from real sidereal periods
 6. **SceneKit renders** with PBR materials, NASA textures, and 60fps updates
-7. **8,920 stars** from the Hipparcos catalogue form the background with real positions and colours
+7. **8,404 stars** from the Yale Bright Star Catalog form the background with real positions and colours
 8. **SwiftUI overlays** provide labels, controls, and a zoom slider
 
 ## Controls
@@ -152,9 +152,13 @@ Zero external dependencies.
 - [architecture.html](https://pcwilliams.design/dev/solarsystem/architecture.html) — Interactive diagrams with SVG illustrations
 - [tutorial.html](https://pcwilliams.design/dev/solarsystem/tutorial.html) — Build narrative and development story
 
-## Credits and Licences
+## Licence
 
-This project uses publicly available texture maps and star catalogue data for non-commercial, educational purposes.
+The Swift source code in this repository is released under the [MIT licence](LICENSE).
+Bundled textures and the star catalogue carry their own licences — all
+permit redistribution for any purpose, including commercially, when their
+attributions are preserved. See [`THIRDPARTY.md`](THIRDPARTY.md) for the
+full inventory.
 
 ### Textures
 
@@ -168,19 +172,19 @@ This project uses publicly available texture maps and star catalogue data for no
 | Europa | NASA/JPL Voyager/Galileo mosaic, via Wikimedia | Public domain |
 | Mercury | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
 | Venus | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Saturn (body) | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
+| Saturn (rings) | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
 | Uranus | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
 | Neptune | [Solar System Scope](https://www.solarsystemscope.com/textures/) | CC-BY 4.0 |
-| Saturn (body) | [Planet Pixel Emporium](http://planetpixelemporium.com/) by James Hastings-Trew | Free non-commercial |
-| Saturn (rings) | [Planet Pixel Emporium](http://planetpixelemporium.com/) by James Hastings-Trew | Free non-commercial |
-| Io | Assembled by [Steve Albers](http://stevealbers.net/) from NASA/JPL data | Public domain source data |
-| Ganymede | Assembled by [Steve Albers](http://stevealbers.net/) from NASA/JPL data | Public domain source data |
-| Callisto | Assembled by Bjorn Jonsson from NASA/JPL data | Public domain source data |
+| Io | [Björn Jónsson](https://bjj.mmedia.is/data/io/io.html) from NASA/JPL Voyager + Galileo data | Publicly available, attribution requested |
+| Ganymede | [Björn Jónsson](https://bjj.mmedia.is/data/ganymede/) from NASA/JPL Voyager + Galileo data | Publicly available, attribution requested |
+| Callisto | [Björn Jónsson](https://bjj.mmedia.is/data/callisto/) from NASA/JPL Voyager + Galileo data | Publicly available, attribution requested |
 
 ### Star Data
 
 | Resource | Source | Licence |
 |----------|--------|---------|
-| HYG Star Database v38 | [astronexus/HYG-Database](https://github.com/astronexus/HYG-Database) by David Nash. Compiled from ESA Hipparcos, Yale Bright Star Catalogue, and Gliese Catalogue of Nearby Stars. | CC-BY-SA 2.0 |
+| Yale Bright Star Catalog, 5th Rev. | Hoffleit & Warren (1991), prepared at NASA Goddard NSSDC/ADC. Distributed via VizieR catalogue [V/50](https://cdsarc.cds.unistra.fr/viz-bin/cat/V/50). 8,404 stars at V ≤ 6.5. Build script: [`tools/build_stars.py`](tools/build_stars.py). | Public domain |
 
 ### Orbital and Rotation Data
 

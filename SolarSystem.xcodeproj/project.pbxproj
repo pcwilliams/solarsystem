@@ -33,8 +33,7 @@
 		5B0000000000000000000062 /* jupiter_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000072 /* jupiter_2k.jpg */; };
 		5B0000000000000000000063 /* saturn_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000073 /* saturn_2k.jpg */; };
 		5B0000000000000000000064 /* mars_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000074 /* mars_2k.jpg */; };
-		5B0000000000000000000065 /* saturn_ring_color.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000075 /* saturn_ring_color.jpg */; };
-		5B0000000000000000000066 /* saturn_ring_alpha.gif in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000076 /* saturn_ring_alpha.gif */; };
+		5B0000000000000000000067 /* saturn_rings.png in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000077 /* saturn_rings.png */; };
 		5B0000000000000000000080 /* mercury_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000090 /* mercury_2k.jpg */; };
 		5B0000000000000000000081 /* venus_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000091 /* venus_2k.jpg */; };
 		5B0000000000000000000082 /* uranus_2k.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 5B0000000000000000000092 /* uranus_2k.jpg */; };
@@ -87,8 +86,7 @@
 		5B0000000000000000000072 /* jupiter_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = jupiter_2k.jpg; sourceTree = "<group>"; };
 		5B0000000000000000000073 /* saturn_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = saturn_2k.jpg; sourceTree = "<group>"; };
 		5B0000000000000000000074 /* mars_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = mars_2k.jpg; sourceTree = "<group>"; };
-		5B0000000000000000000075 /* saturn_ring_color.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = saturn_ring_color.jpg; sourceTree = "<group>"; };
-		5B0000000000000000000076 /* saturn_ring_alpha.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = saturn_ring_alpha.gif; sourceTree = "<group>"; };
+		5B0000000000000000000077 /* saturn_rings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = saturn_rings.png; sourceTree = "<group>"; };
 		5B0000000000000000000090 /* mercury_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = mercury_2k.jpg; sourceTree = "<group>"; };
 		5B0000000000000000000091 /* venus_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = venus_2k.jpg; sourceTree = "<group>"; };
 		5B0000000000000000000092 /* uranus_2k.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = uranus_2k.jpg; sourceTree = "<group>"; };
@@ -230,8 +228,7 @@
 				5B0000000000000000000072 /* jupiter_2k.jpg */,
 				5B0000000000000000000073 /* saturn_2k.jpg */,
 				5B0000000000000000000074 /* mars_2k.jpg */,
-				5B0000000000000000000075 /* saturn_ring_color.jpg */,
-				5B0000000000000000000076 /* saturn_ring_alpha.gif */,
+				5B0000000000000000000077 /* saturn_rings.png */,
 				5B0000000000000000000090 /* mercury_2k.jpg */,
 				5B0000000000000000000091 /* venus_2k.jpg */,
 				5B0000000000000000000092 /* uranus_2k.jpg */,
@@ -345,8 +342,7 @@
 				5B0000000000000000000062 /* jupiter_2k.jpg in Resources */,
 				5B0000000000000000000063 /* saturn_2k.jpg in Resources */,
 				5B0000000000000000000064 /* mars_2k.jpg in Resources */,
-				5B0000000000000000000065 /* saturn_ring.jpg in Resources */,
-				5B0000000000000000000066 /* saturn_ring_alpha.gif in Resources */,
+				5B0000000000000000000067 /* saturn_rings.png in Resources */,
 				5B0000000000000000000080 /* mercury_2k.jpg in Resources */,
 				5B0000000000000000000081 /* venus_2k.jpg in Resources */,
 				5B0000000000000000000082 /* uranus_2k.jpg in Resources */,
